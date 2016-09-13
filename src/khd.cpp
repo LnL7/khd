@@ -17,8 +17,8 @@ internal CFMachPortRef KhdEventTap;
 internal const char *KhdVersion = "0.0.0";
 internal char *ConfigFile;
 
-internal mode DefaultBindingMode = {};
-internal mode *ActiveBindingMode = NULL;
+mode DefaultBindingMode = {};
+mode *ActiveBindingMode = NULL;
 
 internal inline void
 Error(const char *Format, ...)

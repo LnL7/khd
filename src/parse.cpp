@@ -3,9 +3,12 @@
 #include "hotkey.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <stdarg.h>
 
 #define internal static
+extern mode DefaultBindingMode;
+extern mode *ActiveBindingMode;
 
 /*
 void ParseHotkeyModifiers(hotkey *Hotkey, std::string KeySym)
@@ -81,7 +84,8 @@ Error(const char *Format, ...)
     va_end(Args);
 }
 
-void ParseCommand(tokenizer *Tokenizer, void *Hotkey)
+internal void
+ParseCommand(tokenizer *Tokenizer, void *Hotkey)
 {
     token Command = GetToken(Tokenizer);
     switch(Command.Type)
@@ -105,8 +109,78 @@ void ParseCommand(tokenizer *Tokenizer, void *Hotkey)
     }
 }
 
+// TODO(koekeishiya): Create new hotkey from identifier token
+internal void
+ParseIdentifier(token *Token, hotkey *Hotkey)
+{
+    printf("Token_Identifier: %.*s\n", Token->Length, Token->Text);
+
+    char *At = Token->Text;
+    bool ReachedKeyDelim = false;
+
+    for(int Index = 0;
+        Index < Token->Length;
+        ++Index, ++Token->Text)
+    {
+        if((Token->Text[0] == '+') ||
+           (Token->Text[0] == '-') ||
+           (Index == Token->Length - 1))
+        {
+            char *Mod = At;
+            int Length = Token->Text - At;
+
+            if(!ReachedKeyDelim)
+                printf("Token_Modifier: %.*s\n", Length, Mod);
+            else
+                printf("Token_Key: %.*s\n", Length, Mod);
+
+            if(Token->Text[0] == '-')
+                ReachedKeyDelim = true;
+
+            ++Token->Text;
+            At = Token->Text;
+        }
+        else
+        {
+            // NOTE(koekeishiya): Not a delimeter, continue
+        }
+    }
+}
+
+/*
+struct mode
+{
+    char *Name;
+    uint32_t Color;
+
+    bool Prefix;
+    double Timeout;
+    char *Restore;
+
+    hotkey *Hotkey;
+    mode *Next;
+};
+
+struct hotkey
+{
+    mode *Mode;
+
+    uint32_t Flags;
+    CGKeyCode Key;
+    char *Command;
+
+    hotkey *Next;
+};
+ * */
+
+// TODO(koekeishiya): We want to clear existing config information before reloading.
+// The active binding mode should also be pointing to the 'default' mode.
 void ParseConfig(char *Contents)
 {
+    hotkey *Hotkey = (hotkey *) malloc(sizeof(hotkey));
+    memset(Hotkey, 0, sizeof(hotkey));
+    ActiveBindingMode->Hotkey = Hotkey;
+
     tokenizer Tokenizer = { Contents };
     bool Parsing = true;
     while(Parsing)
@@ -124,8 +198,7 @@ void ParseConfig(char *Contents)
             } break;
             case Token_Identifier:
             {
-                printf("Token_Identifier: %.*s\n", Token.Length, Token.Text);
-                // TODO(koekeishiya): Create new hotkey with identifier
+                ParseIdentifier(&Token, Hotkey);
                 ParseCommand(&Tokenizer, NULL);
             } break;
             default:

@@ -1,13 +1,34 @@
 # sample config for khd
 
-cmd+alt-h {
-    echo $(date) |\
-    alerter -Title Time -timeout 5;\
+ctrl-f {
+    khd mode activate BindingModeSwitcher
+}
+
+BindingModeSwitcher+ctrl-f {
+    khd mode activate default
+}
+
+cmd-0x27 {
+    echo "Bind through keycode" |\
+    alerter -Title Keycode -timeout 3
+}
+
+cmd-h {
     kwmc window -f west
 }
 
-mode+cmd+alt-h {
-    echo $(date) |\
-    alerter -Title Time -timeout 5;\
+BindingModeSwitcher-h {
     kwmc window -f west
+}
+
+BindingModeSwitcher-l {
+    kwmc window -f east
+}
+
+BindingModeSwitcher-j {
+    kwmc window -f south
+}
+
+BindingModeSwitcher-k {
+    kwmc window -f north
 }

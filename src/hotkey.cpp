@@ -97,8 +97,6 @@ Execute(char *Command)
 internal void
 ActivateMode(char *Mode)
 {
-    int Length = strlen(Mode);
-
     char *End = Mode + strlen(Mode) - 1;
     while(End > Mode && !isspace(*End))
         --End;

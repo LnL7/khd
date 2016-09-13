@@ -1,0 +1,13 @@
+# sample config for khd
+
+cmd+alt-h {
+    echo $(date) |\
+    alerter -Title Time -timeout 5;\
+    kwmc window -f west
+}
+
+mode+cmd+alt-h {
+    echo $(date) |\
+    alerter -Title Time -timeout 5;\
+    kwmc window -f west
+}

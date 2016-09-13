@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <getopt.h>
+#include <signal.h>
 #include <string.h>
 #include <Carbon/Carbon.h>
 
@@ -129,6 +130,8 @@ Init()
     {
         Error("Khd: Could not open file '%s'\n", ConfigFile);
     }
+
+    signal(SIGCHLD, SIG_IGN);
 }
 
 internal inline bool

@@ -1,5 +1,5 @@
 #include "parse.h"
-#include "tokenizer.h"
+#include "tokenize.h"
 #include "hotkey.h"
 #include <stdlib.h>
 #include <stdio.h>

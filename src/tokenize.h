@@ -1,5 +1,5 @@
-#ifndef TOKENIZER_H
-#define TOKENIZER_H
+#ifndef TOKENIZE_H
+#define TOKENIZE_H
 
 enum token_type
 {

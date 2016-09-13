@@ -98,7 +98,6 @@ internal void
 ActivateMode(char *Mode)
 {
     int Length = strlen(Mode);
-    printf("%d\n", Length);
 
     char *End = Mode + strlen(Mode) - 1;
     while(End > Mode && !isspace(*End))

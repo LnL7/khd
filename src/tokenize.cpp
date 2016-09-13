@@ -1,50 +1,6 @@
 #include "tokenize.h"
 #define internal static
 
-internal inline bool
-IsEndOfLine(char C)
-{
-    bool Result = ((C == '\n') ||
-                   (C == '\r'));
-
-    return Result;
-}
-
-internal inline bool
-IsWhiteSpace(char C)
-{
-    bool Result = ((C == ' ') ||
-                   (C == '\t') ||
-                   IsEndOfLine(C));
-
-    return Result;
-}
-
-internal inline bool
-IsAlpha(char C)
-{
-    bool Result = (((C >= 'a') && (C <= 'z')) ||
-                   ((C >= 'A') && (C <= 'Z')));
-
-    return Result;
-}
-
-internal inline bool
-IsNumeric(char C)
-{
-    bool Result = ((C >= '0') && (C <= '9'));
-    return Result;
-}
-
-internal inline bool
-IsHexadecimal(char C)
-{
-    bool Result = (((C >= 'a') && (C <= 'f')) ||
-                   ((C >= 'A') && (C <= 'F')) ||
-                   (IsNumeric(C)));
-    return Result;
-}
-
 internal inline void
 EatAllWhiteSpace(tokenizer *Tokenizer)
 {
@@ -120,9 +76,7 @@ token GetToken(tokenizer *Tokenizer)
             if(IsAlpha(C))
             {
                 while(IsAlpha(Tokenizer->At[0]) ||
-                      IsNumeric(Tokenizer->At[0]) ||
-                      (Tokenizer->At[0] == '+') ||
-                      (Tokenizer->At[0] == '-'))
+                      IsNumeric(Tokenizer->At[0]))
                     ++Tokenizer->At;
 
                 Token.Type = Token_Identifier;

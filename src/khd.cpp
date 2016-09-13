@@ -13,7 +13,6 @@ extern "C" bool CGSIsSecureEventInputSet();
 #define IsSecureKeyboardEntryEnabled CGSIsSecureEventInputSet
 
 internal CFMachPortRef KhdEventTap;
-
 internal const char *KhdVersion = "0.0.0";
 internal char *ConfigFile;
 
@@ -43,7 +42,22 @@ KeyCallback(CGEventTapProxy Proxy, CGEventType Type, CGEventRef Event, void *Con
         } break;
         case kCGEventKeyDown:
         {
-            printf("Khd: Key down\n");
+            hotkey *Hotkey = (hotkey *) malloc(sizeof(hotkey));
+            if(Hotkey)
+            {
+                if(HotkeyForCGEvent(Event, Hotkey))
+                {
+                    printf("matched hotkey\n");
+                    ExecuteHotkey(Hotkey);
+                    if(!HasFlags(Hotkey, Hotkey_Flag_Passthrough))
+                        return NULL;
+                }
+                else
+                {
+                    printf("key pressed\n");
+                    free(Hotkey);
+                }
+            }
         } break;
     }
 

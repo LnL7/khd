@@ -11,37 +11,6 @@ extern mode DefaultBindingMode;
 extern mode *ActiveBindingMode;
 
 /*
-void ParseHotkeyModifiers(hotkey *Hotkey, std::string KeySym)
-{
-    std::vector<std::string> Modifiers = SplitString(KeySym, '+');
-
-    for(size_t Index = 0; Index < Modifiers.size(); ++Index)
-    {
-        if(Modifiers[ModIndex] == "cmd")
-            AddFlags(Hotkey, Hotkey_Modifier_Flag_Cmd);
-        else if(Modifiers[ModIndex] == "lcmd")
-            AddFlags(Hotkey, Hotkey_Modifier_Flag_LCmd);
-        else if(Modifiers[ModIndex] == "rcmd")
-            AddFlags(Hotkey, Hotkey_Modifier_Flag_RCmd);
-        else if(Modifiers[ModIndex] == "alt")
-            AddFlags(Hotkey, Hotkey_Modifier_Flag_Alt);
-        else if(Modifiers[ModIndex] == "lalt")
-            AddFlags(Hotkey, Hotkey_Modifier_Flag_LAlt);
-        else if(Modifiers[ModIndex] == "ralt")
-            AddFlags(Hotkey, Hotkey_Modifier_Flag_RAlt);
-        else if(Modifiers[ModIndex] == "shift")
-            AddFlags(Hotkey, Hotkey_Modifier_Flag_Shift);
-        else if(Modifiers[ModIndex] == "lshift")
-            AddFlags(Hotkey, Hotkey_Modifier_Flag_LShift);
-        else if(Modifiers[ModIndex] == "rshift")
-            AddFlags(Hotkey, Hotkey_Modifier_Flag_RShift);
-        else if(Modifiers[ModIndex] == "ctrl")
-            AddFlags(Hotkey, Hotkey_Modifier_Flag_Control);
-        else
-            Hotkey->Mode = Modifiers[ModIndex];
-    }
-}
-
 bool ParseHotkey(std::string KeySym, std::string Command, hotkey *Hotkey, bool Passthrough, bool KeycodeInHex)
 {
     std::vector<std::string> KeyTokens = SplitString(KeySym, '-');
@@ -82,10 +51,67 @@ Error(const char *Format, ...)
     va_start(Args, Format);
     vfprintf(stderr, Format, Args);
     va_end(Args);
+    exit(EXIT_FAILURE);
+}
+
+internal inline unsigned int
+HexToInt(char *Hex)
+{
+    uint32_t Result;
+    sscanf(Hex, "%x", &Result);
+    return Result;
+}
+
+internal char *
+AllocAndCopyString(char *Text, int Length)
+{
+    char *Result = (char *) malloc(Length + 1);
+    strncpy(Result, Text, Length);
+    Result[Length] = '\0';
+
+    return Result;
+}
+
+internal inline hotkey *
+AllocHotkey()
+{
+    hotkey *Hotkey = (hotkey *) malloc(sizeof(hotkey));
+    memset(Hotkey, 0, sizeof(hotkey));
+    Hotkey->Mode = strdup("default");
+
+    return Hotkey;
+}
+
+internal inline void
+AppendHotkey(hotkey *Hotkey)
+{
+    mode *BindingMode = GetBindingMode(Hotkey->Mode);
+    if(!BindingMode)
+        BindingMode = CreateBindingMode(Hotkey->Mode);
+
+    if(BindingMode->Hotkey)
+    {
+        hotkey *Last = BindingMode->Hotkey;
+        while(Last->Next)
+            Last = Last->Next;
+
+        Last->Next = Hotkey;
+    }
+    else
+    {
+        BindingMode->Hotkey = Hotkey;
+    }
 }
 
 internal void
-ParseCommand(tokenizer *Tokenizer, void *Hotkey)
+StripTrailingWhiteSpace(token *Token)
+{
+    while(IsWhiteSpace(Token->Text[Token->Length-1]))
+        --Token->Length;
+}
+
+internal void
+ParseCommand(tokenizer *Tokenizer, hotkey *Hotkey)
 {
     token Command = GetToken(Tokenizer);
     switch(Command.Type)
@@ -94,8 +120,10 @@ ParseCommand(tokenizer *Tokenizer, void *Hotkey)
         {
             if(RequireToken(Tokenizer, Token_CloseBrace))
             {
-                // TODO(koekeishiya): Apply command to bind.
-                printf("Token_Command: %.*s\n", Command.Length, Command.Text);
+                StripTrailingWhiteSpace(&Command);
+                Hotkey->Command = AllocAndCopyString(Command.Text, Command.Length);
+                AppendHotkey(Hotkey);
+                printf("Token_Command: %s\n", Hotkey->Command);
             }
             else
             {
@@ -109,78 +137,132 @@ ParseCommand(tokenizer *Tokenizer, void *Hotkey)
     }
 }
 
-// TODO(koekeishiya): Create new hotkey from identifier token
-internal void
+void AddHotkeyModifier(char *Mod, int Length, hotkey *Hotkey)
+{
+    char *Modifier = AllocAndCopyString(Mod, Length);
+    printf("Token_Modifier: %s\n", Modifier);
+
+    if(strcmp(Modifier, "cmd") == 0)
+    {
+        AddFlags(Hotkey, Hotkey_Flag_Cmd);
+    }
+    else if(strcmp(Modifier, "lcmd") == 0)
+    {
+        AddFlags(Hotkey, Hotkey_Flag_LCmd);
+    }
+    else if(strcmp(Modifier, "rcmd") == 0)
+    {
+        AddFlags(Hotkey, Hotkey_Flag_RCmd);
+    }
+    else if(strcmp(Modifier, "alt") == 0)
+    {
+        AddFlags(Hotkey, Hotkey_Flag_Alt);
+    }
+    else if(strcmp(Modifier, "lalt") == 0)
+    {
+        AddFlags(Hotkey, Hotkey_Flag_LAlt);
+    }
+    else if(strcmp(Modifier, "ralt") == 0)
+    {
+        AddFlags(Hotkey, Hotkey_Flag_RAlt);
+    }
+    else if(strcmp(Modifier, "shift") == 0)
+    {
+        AddFlags(Hotkey, Hotkey_Flag_Shift);
+    }
+    else if(strcmp(Modifier, "lshift") == 0)
+    {
+        AddFlags(Hotkey, Hotkey_Flag_LShift);
+    }
+    else if(strcmp(Modifier, "rshift") == 0)
+    {
+        AddFlags(Hotkey, Hotkey_Flag_RShift);
+    }
+    else if(strcmp(Modifier, "ctrl") == 0)
+    {
+        AddFlags(Hotkey, Hotkey_Flag_Control);
+    }
+    else
+    {
+        free(Hotkey->Mode);
+        Hotkey->Mode = strdup(Modifier);
+    }
+
+    free(Modifier);
+}
+
+internal bool
 ParseIdentifier(token *Token, hotkey *Hotkey)
 {
-    printf("Token_Identifier: %.*s\n", Token->Length, Token->Text);
+    bool Result = true;
 
-    char *At = Token->Text;
-    bool ReachedKeyDelim = false;
+    int At = 0;
+    bool KeyDelim = false;
+    token Key = {};
 
     for(int Index = 0;
         Index < Token->Length;
-        ++Index, ++Token->Text)
+        ++Index)
     {
-        if((Token->Text[0] == '+') ||
-           (Token->Text[0] == '-') ||
-           (Index == Token->Length - 1))
+        char C = Token->Text[Index];
+        switch(C)
         {
-            char *Mod = At;
-            int Length = Token->Text - At;
+            case '+':
+            case '-':
+            {
+                char *Mod = Token->Text + At;
+                int Length = Index - At;
 
-            if(!ReachedKeyDelim)
-                printf("Token_Modifier: %.*s\n", Length, Mod);
-            else
-                printf("Token_Key: %.*s\n", Length, Mod);
+                if(Length > 0)
+                {
+                    AddHotkeyModifier(Mod, Length, Hotkey);
+                }
 
-            if(Token->Text[0] == '-')
-                ReachedKeyDelim = true;
+                if(C == '-')
+                    KeyDelim = true;
 
-            ++Token->Text;
-            At = Token->Text;
+                At = Index + 1;
+            } break;
+            default:
+            {
+                if(KeyDelim && Index == Token->Length - 1)
+                {
+                    Key.Length = Index - At + 1;
+                    Key.Text = AllocAndCopyString(Token->Text + At, Key.Length);
+                    printf("Token_Key: %s\n", Key.Text);
+                }
+            } break;
+        }
+    }
+
+    if(Key.Length > 1)
+    {
+        if(1)
+        {
+            Hotkey->Key = HexToInt(Key.Text);
         }
         else
         {
-            // NOTE(koekeishiya): Not a delimeter, continue
+            Result = LayoutIndependentKeycode(Key.Text, Hotkey);
         }
     }
+    else if(Key.Length == 1)
+    {
+        Result = KeycodeFromChar(Key.Text[0], Hotkey);
+    }
+    else
+    {
+        printf("No key specified!\n");
+        Result = false;
+    }
+
+    return Result;
 }
-
-/*
-struct mode
-{
-    char *Name;
-    uint32_t Color;
-
-    bool Prefix;
-    double Timeout;
-    char *Restore;
-
-    hotkey *Hotkey;
-    mode *Next;
-};
-
-struct hotkey
-{
-    mode *Mode;
-
-    uint32_t Flags;
-    CGKeyCode Key;
-    char *Command;
-
-    hotkey *Next;
-};
- * */
 
 // TODO(koekeishiya): We want to clear existing config information before reloading.
 // The active binding mode should also be pointing to the 'default' mode.
 void ParseConfig(char *Contents)
 {
-    hotkey *Hotkey = (hotkey *) malloc(sizeof(hotkey));
-    memset(Hotkey, 0, sizeof(hotkey));
-    ActiveBindingMode->Hotkey = Hotkey;
-
     tokenizer Tokenizer = { Contents };
     bool Parsing = true;
     while(Parsing)
@@ -198,8 +280,15 @@ void ParseConfig(char *Contents)
             } break;
             case Token_Identifier:
             {
-                ParseIdentifier(&Token, Hotkey);
-                ParseCommand(&Tokenizer, NULL);
+                hotkey *Hotkey = AllocHotkey();
+                if(ParseIdentifier(&Token, Hotkey))
+                {
+                    ParseCommand(&Tokenizer, Hotkey);
+                }
+                else
+                {
+                    Error("Invalid format for identifier: %.*s\n", Token.Length, Token.Text);
+                }
             } break;
             default:
             {

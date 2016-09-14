@@ -85,6 +85,7 @@ bool HotkeyForCGEvent(CGEventRef Event, hotkey *Hotkey);
 mode *CreateBindingMode(char *Mode);
 mode *GetBindingMode(char *Mode);
 mode *GetLastBindingMode();
+void ActivateMode(char *Mode);
 
 bool KeycodeFromChar(char Key, hotkey *Hotkey);
 bool LayoutIndependentKeycode(char *Key, hotkey *Hotkey);

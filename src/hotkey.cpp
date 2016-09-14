@@ -6,11 +6,47 @@
 #define internal static
 extern mode DefaultBindingMode;
 extern mode *ActiveBindingMode;
+extern uint32_t Compatibility;
 
 /* TODO(koekeishiya): We probably want the user to be able to specify
  * which shell they want to use. */
 internal const char *Shell = "/bin/bash";
 internal const char *ShellArgs = "-c";
+
+internal void
+Execute(char *Command)
+{
+    int ChildPID = fork();
+    if(ChildPID == 0)
+    {
+        char *Exec[] = { (char *) Shell, (char *) ShellArgs, Command, NULL};
+        int StatusCode = execvp(Exec[0], Exec);
+        exit(StatusCode);
+    }
+}
+
+EVENT_CALLBACK(Callback_Event_Hotkey)
+{
+    hotkey *Hotkey = (hotkey *) Event->Context;
+
+    if(Hotkey->Command)
+    {
+        Execute(Hotkey->Command);
+
+        /* TODO(koekeishiya): Update timer if prefix mode is enabled.
+        if(ActiveMode->Prefix)
+        {
+            ActiveMode->Time = std::chrono::steady_clock::now();
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, ActiveMode->Timeout * NSEC_PER_SEC), dispatch_get_main_queue(),
+            ^{
+                CheckPrefixTimeout();
+            });
+        }
+        */
+    }
+
+    free(Hotkey);
+}
 
 mode *CreateBindingMode(char *Mode)
 {
@@ -53,50 +89,22 @@ mode *GetBindingMode(char *Mode)
 
 void ActivateMode(char *Mode)
 {
-    /* TODO(koekeishiya): We need some sort of 'Kwm' compatibility mode
-     * to automatically issue 'kwmc config border focused color Mode->Color' */
-
     mode *BindingMode = GetBindingMode(Mode);
     if(BindingMode)
     {
         printf("Activate mode: %s\n", Mode);
         ActiveBindingMode = BindingMode;
-    }
-}
 
-internal void
-Execute(char *Command)
-{
-    int ChildPID = fork();
-    if(ChildPID == 0)
-    {
-        char *Exec[] = { (char *) Shell, (char *) ShellArgs, Command, NULL};
-        int StatusCode = execvp(Exec[0], Exec);
-        exit(StatusCode);
-    }
-}
-
-EVENT_CALLBACK(Callback_Event_Hotkey)
-{
-    hotkey *Hotkey = (hotkey *) Event->Context;
-
-    if(Hotkey->Command)
-    {
-        Execute(Hotkey->Command);
-
-        /* TODO(koekeishiya): Update timer if prefix mode is enabled.
-        if(ActiveMode->Prefix)
+        /* TODO(koekeishiya): We need some sort of 'Kwm' compatibility mode
+         * to automatically issue 'kwmc config border focused color Mode->Color' */
+        if((Compatibility & (1 << 0)) &&
+           (ActiveBindingMode->Color))
         {
-            ActiveMode->Time = std::chrono::steady_clock::now();
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, ActiveMode->Timeout * NSEC_PER_SEC), dispatch_get_main_queue(),
-            ^{
-                CheckPrefixTimeout();
-            });
+            char KwmCommand[64] = "kwmc config border focused color ";
+            strcat(KwmCommand, ActiveBindingMode->Color);
+            Execute(KwmCommand);
         }
-        */
     }
-
-    free(Hotkey);
 }
 
 internal inline bool

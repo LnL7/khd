@@ -1,16 +1,20 @@
 # sample config for khd
 
+# enable kwm compatibility mode. changes color of focused
+# border when entering a given mode, if a color is specified.
+khd kwm on
+
 # TODO(koekeishiya): these settings are parsed and applied properly,
 # however, they have not yet been implemented.
 khd mode prefix prefix on
 khd mode prefix timeout 0.75
-khd mode prefix color 0xDD458588
 khd mode prefix restore default
-
-khd mode switcher color 0xDD458588
-khd mode ytd color 0xDDcc5577
 ####################################################################
 
+khd mode default color 0xDDD5C4A1
+khd mode prefix color 0xDD458588
+khd mode switcher color 0xDD458588
+khd mode ytd color 0xDDcc5577
 
 # TODO(koekeishiya): decide on acceptable syntax for passthrough
 

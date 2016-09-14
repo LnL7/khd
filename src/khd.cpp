@@ -21,6 +21,7 @@ internal char *ConfigFile;
 
 mode DefaultBindingMode = {};
 mode *ActiveBindingMode = NULL;
+uint32_t Compatibility = 0;
 
 internal inline void
 Error(const char *Format, ...)
@@ -121,7 +122,6 @@ Init()
     }
 
     DefaultBindingMode.Name = strdup("default");
-    DefaultBindingMode.Color = 0xddd5c4a1;
     ActiveBindingMode = &DefaultBindingMode;
 
     char *Contents = ReadFile(ConfigFile);

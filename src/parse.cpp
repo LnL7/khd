@@ -11,6 +11,7 @@
 #define internal static
 extern mode DefaultBindingMode;
 extern mode *ActiveBindingMode;
+extern uint32_t Compatibility;
 
 /*
     if(Passthrough)
@@ -290,10 +291,8 @@ ParseKhdModeProperties(token *TokenMode, tokenizer *Tokenizer)
     else if(TokenEquals(Token, "color"))
     {
         token Token = GetToken(Tokenizer);
-        char *Temp = AllocAndCopyString(Token.Text, Token.Length);
-        BindingMode->Color = HexToInt(Temp);
-        printf("Prefix Color: %s : %u\n", Temp, BindingMode->Color);
-        free(Temp);
+        BindingMode->Color = AllocAndCopyString(Token.Text, Token.Length);
+        printf("Prefix Color: %s\n", BindingMode->Color);
     }
     else if(TokenEquals(Token, "restore"))
     {
@@ -303,6 +302,24 @@ ParseKhdModeProperties(token *TokenMode, tokenizer *Tokenizer)
     }
 
     free(Mode);
+}
+
+internal void
+ParseKhdKwmCompatibility(tokenizer *Tokenizer)
+{
+    token Token = GetToken(Tokenizer);
+    if(TokenEquals(Token, "on"))
+    {
+        Compatibility |= (1 << 0);
+    }
+    else if(TokenEquals(Token, "off"))
+    {
+        Compatibility &= ~(1 << 0);
+    }
+    else
+    {
+        Notice("Unexpected token '%.*s'\n", Token.Length, Token.Text);
+    }
 }
 
 internal void
@@ -344,6 +361,10 @@ ParseKhd(tokenizer *Tokenizer)
             if(TokenEquals(Token, "reload"))
             {
                 // TODO(koekeishiya): Reload config file.
+            }
+            else if(TokenEquals(Token, "kwm"))
+            {
+                ParseKhdKwmCompatibility(Tokenizer);
             }
             else if(TokenEquals(Token, "mode"))
             {

@@ -2,15 +2,34 @@
 
 # TODO(koekeishiya): these settings are parsed and applied properly,
 # however, they have not yet been implemented.
-
 khd mode prefix prefix on
 khd mode prefix timeout 0.75
 khd mode prefix color 0xDD458588
 khd mode prefix restore default
 
 khd mode switcher color 0xDD458588
+khd mode ytd color 0xDDcc5577
 ####################################################################
 
+
+# TODO(koekeishiya): decide on acceptable syntax for passthrough
+
+# TODO(koekeishiya): possibly allow combined syntax such as
+# switcher-[h,j,k,l] {
+#     kwmc window -f [west, south, north, east]
+# }
+#
+# [switcher,ytd]+ctrl-f {
+#     khd -e "mode activate default"
+# }
+
+switcher+ctrl-f { khd -e "mode activate default" }
+ytd+ctrl-f { khd -e "mode activate default" }
+
+switcher-h { kwmc window -f west }
+switcher-j { kwmc window -f south }
+switcher-k { kwmc window -f north }
+switcher-l { kwmc window -f east }
 
 # NOTE(koekeishiya): when khd is launched with the '-e' (--emit) flag,
 # the specified message is sent to a running instance of khd through a socket.
@@ -19,8 +38,8 @@ ctrl-f {
     khd -e "mode activate switcher"
 }
 
-switcher+ctrl-f {
-    khd -e "mode activate default"
+switcher-w {
+    khd -e "mode activate ytd"
 }
 
 cmd-0x27
@@ -33,13 +52,26 @@ cmd-h {
     kwmc window -f west
 }
 
-# TODO(koekeishiya): decide on acceptable syntax for passthrough
+ytd-z
+{
+    ytc prev;
+    khd -e "mode activate default"
+}
 
-# TODO(koekeishiya): possibly allow combined syntax such as
-# switcher-[h,j,k,l] { kwmc window -f [west, south, north, east] } ?
+ytd-x
+{
+    ytc play;
+    khd -e "mode activate default"
+}
 
-switcher-h { kwmc window -f west }
-switcher-j { kwmc window -f south }
-switcher-k { kwmc window -f north }
-switcher-l { kwmc window -f east }
+ytd-c
+{
+    ytc next;
+    khd -e "mode activate default"
+}
 
+ytd-v
+{
+    ytc stop;
+    khd -e "mode activate default"
+}

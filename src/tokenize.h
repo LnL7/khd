@@ -1,5 +1,5 @@
-#ifndef TOKENIZE_H
-#define TOKENIZE_H
+#ifndef KHD_TOKENIZE_H
+#define KHD_TOKENIZE_H
 
 enum token_type
 {

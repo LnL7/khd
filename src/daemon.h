@@ -1,5 +1,5 @@
-#ifndef DAEMON_H
-#define DAEMON_H
+#ifndef KHD_DAEMON_H
+#define KHD_DAEMON_H
 
 bool StartDaemon();
 void TerminateDaemon();

@@ -1,5 +1,5 @@
-#ifndef LOCALE_H
-#define LOCALE_H
+#ifndef KHD_LOCALE_H
+#define KHD_LOCALE_H
 
 #include "hotkey.h"
 

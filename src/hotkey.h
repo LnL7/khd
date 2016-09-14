@@ -1,5 +1,5 @@
-#ifndef HOTKEY_H
-#define HOTKEY_H
+#ifndef KHD_HOTKEY_H
+#define KHD_HOTKEY_H
 
 #include <stdint.h>
 #include <Carbon/Carbon.h>
@@ -79,7 +79,6 @@ HasFlags(hotkey *Hotkey, uint32_t Flag)
     return Result;
 }
 
-void ExecuteHotkey(hotkey *Hotkey);
 bool HotkeyForCGEvent(CGEventRef Event, hotkey *Hotkey);
 
 mode *CreateBindingMode(char *Mode);

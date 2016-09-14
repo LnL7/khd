@@ -45,7 +45,7 @@ struct hotkey;
 struct mode
 {
     char *Name;
-    uint32_t Color;
+    char *Color;
 
     bool Prefix;
     double Timeout;

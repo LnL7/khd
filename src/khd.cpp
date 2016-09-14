@@ -6,6 +6,7 @@
 #include <string.h>
 #include <Carbon/Carbon.h>
 
+#include "daemon.h"
 #include "parse.h"
 #include "hotkey.h"
 
@@ -138,11 +139,12 @@ internal inline bool
 ParseArguments(int Count, char **Args)
 {
     int Option;
-    const char *Short = "vc:";
+    const char *Short = "vc:e:";
     struct option Long[] =
     {
         { "version", no_argument, NULL, 'v' },
         { "config", required_argument, NULL, 'c' },
+        { "emit", required_argument, NULL, 'e' },
         { NULL, 0, NULL, 0 }
     };
 
@@ -160,6 +162,23 @@ ParseArguments(int Count, char **Args)
                 ConfigFile = strdup(optarg);
                 printf("Khd: Using config '%s'\n", ConfigFile);
             } break;
+            case 'e':
+            {
+                int SockFD;
+                if(ConnectToDaemon(&SockFD))
+                {
+                    char *Emit = strdup(optarg);
+                    printf("emitting '%s'\n", Emit);
+                    WriteToSocket(Emit, SockFD);
+                    CloseSocket(SockFD);
+                    free(Emit);
+                    exit(EXIT_SUCCESS);
+                }
+                else
+                {
+                    Error("Could not connect to daemon! Terminating.\n");
+                }
+            } break;
         }
     }
 
@@ -173,6 +192,9 @@ int main(int Count, char **Args)
 
     if(IsSecureKeyboardEntryEnabled())
         Error("Khd: Secure keyboard entry is enabled! Terminating.\n");
+
+    if(!StartDaemon())
+        Error("Khd: Could not start daemon! Terminating.\n");
 
     Init();
     ConfigureRunLoop();

@@ -1,5 +1,6 @@
 #include "hotkey.h"
 #include "locale.h"
+#include "event.h"
 #include <string.h>
 
 #define internal static
@@ -75,8 +76,10 @@ Execute(char *Command)
     }
 }
 
-void ExecuteHotkey(hotkey *Hotkey)
+EVENT_CALLBACK(Callback_Event_Hotkey)
 {
+    hotkey *Hotkey = (hotkey *) Event->Context;
+
     if(Hotkey->Command)
     {
         Execute(Hotkey->Command);
@@ -92,6 +95,8 @@ void ExecuteHotkey(hotkey *Hotkey)
         }
         */
     }
+
+    free(Hotkey);
 }
 
 internal inline bool

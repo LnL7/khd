@@ -36,7 +36,7 @@ cmd-h {
 # TODO(koekeishiya): decide on acceptable syntax for passthrough
 
 # TODO(koekeishiya): possibly allow combined syntax such as
-# switcher-[h,j,k,l] { kwmc window -f [west, south, north, east] ?
+# switcher-[h,j,k,l] { kwmc window -f [west, south, north, east] } ?
 
 switcher-h { kwmc window -f west }
 switcher-j { kwmc window -f south }

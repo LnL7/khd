@@ -4,12 +4,10 @@
 internal inline void
 EatAllWhiteSpace(tokenizer *Tokenizer)
 {
-    while(Tokenizer->At[0])
+    while((Tokenizer->At[0]) &&
+          (IsWhiteSpace(Tokenizer->At[0])))
     {
-        if(IsWhiteSpace(Tokenizer->At[0]))
             ++Tokenizer->At;
-        else
-            break;
     }
 }
 
@@ -23,9 +21,12 @@ bool RequireToken(tokenizer *Tokenizer, token_type DesiredType)
 bool TokenEquals(token Token, const char *Match)
 {
     const char *At = Match;
-    for(int Index = 0; Index < Token.Length; ++Index, ++At)
+    for(int Index = 0;
+        Index < Token.Length;
+        ++Index, ++At)
     {
-        if((*At == 0) || (Token.Text[Index] != *At))
+        if((*At == 0) ||
+           (Token.Text[Index] != *At))
             return false;
     }
 
@@ -52,7 +53,8 @@ token GetToken(tokenizer *Tokenizer)
             EatAllWhiteSpace(Tokenizer);
             Token.Text = Tokenizer->At;
 
-            while(Tokenizer->At[0] && Tokenizer->At[0] != '}')
+            while((Tokenizer->At[0]) &&
+                  (Tokenizer->At[0] != '}'))
                 ++Tokenizer->At;
 
             Token.Type = Token_Command;
@@ -65,7 +67,8 @@ token GetToken(tokenizer *Tokenizer)
         case '#':
         {
             Token.Text = Tokenizer->At;
-            while(Tokenizer->At[0] && !IsEndOfLine(Tokenizer->At[0]))
+            while((Tokenizer->At[0]) &&
+                  (!IsEndOfLine(Tokenizer->At[0])))
                 ++Tokenizer->At;
 
             Token.Type = Token_Comment;
@@ -75,8 +78,8 @@ token GetToken(tokenizer *Tokenizer)
         {
             if(IsAlpha(C))
             {
-                while(IsAlpha(Tokenizer->At[0]) ||
-                      IsNumeric(Tokenizer->At[0]))
+                while((IsAlpha(Tokenizer->At[0])) ||
+                      (IsNumeric(Tokenizer->At[0])))
                     ++Tokenizer->At;
 
                 Token.Type = Token_Identifier;
@@ -84,10 +87,13 @@ token GetToken(tokenizer *Tokenizer)
             }
             else if(IsNumeric(C))
             {
-                if(C == '0' && (Tokenizer->At[0] == 'x' || Tokenizer->At[0] == 'X'))
+                if((C == '0') &&
+                   (Tokenizer->At[0] == 'x' ||
+                    Tokenizer->At[0] == 'X'))
                 {
                     ++Tokenizer->At;
-                    while(IsHexadecimal(Tokenizer->At[0]))
+                    while((Tokenizer->At[0]) &&
+                          (IsHexadecimal(Tokenizer->At[0])))
                         ++Tokenizer->At;
 
                     Token.Type = Token_Hex;
@@ -95,7 +101,8 @@ token GetToken(tokenizer *Tokenizer)
                 }
                 else
                 {
-                    while(IsNumeric(Tokenizer->At[0]))
+                    while((Tokenizer->At[0]) &&
+                          (IsNumeric(Tokenizer->At[0])))
                         ++Tokenizer->At;
 
                     Token.Type = Token_Digit;

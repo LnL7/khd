@@ -87,8 +87,4 @@ mode *GetBindingMode(char *Mode);
 mode *GetLastBindingMode();
 void ActivateMode(char *Mode);
 
-bool KeycodeFromChar(char Key, hotkey *Hotkey);
-bool LayoutIndependentKeycode(char *Key, hotkey *Hotkey);
-bool StringsAreEqual(const char *A, const char *B);
-
 #endif

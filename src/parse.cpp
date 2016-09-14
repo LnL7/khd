@@ -1,6 +1,8 @@
 #include "parse.h"
 #include "tokenize.h"
+#include "locale.h"
 #include "hotkey.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

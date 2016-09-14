@@ -7,6 +7,8 @@
 extern mode DefaultBindingMode;
 extern mode *ActiveBindingMode;
 
+/* TODO(koekeishiya): We probably want the user to be able to specify
+ * which shell they want to use. */
 internal const char *Shell = "/bin/bash";
 internal const char *ShellArgs = "-c";
 
@@ -94,14 +96,12 @@ Execute(char *Command)
     }
 }
 
-internal void
-ActivateMode(char *Mode)
+void ActivateMode(char *Mode)
 {
-    char *End = Mode + strlen(Mode) - 1;
-    while(End > Mode && !isspace(*End))
-        --End;
+    /* TODO(koekeishiya): We need some sort of 'Kwm' compatibility mode
+     * to automatically issue 'kwmc config border focused color Mode->Color' */
 
-    mode *BindingMode = GetBindingMode(++End);
+    mode *BindingMode = GetBindingMode(Mode);
     if(BindingMode)
     {
         printf("Activate mode: %s\n", Mode);
@@ -130,7 +130,7 @@ void ExecuteHotkey(hotkey *Hotkey)
         else
             Execute(Hotkey->Command);
 
-        /*
+        /* TODO(koekeishiya): Update timer if prefix mode is enabled.
         if(ActiveMode->Prefix)
         {
             ActiveMode->Time = std::chrono::steady_clock::now();

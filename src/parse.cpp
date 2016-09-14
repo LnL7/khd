@@ -11,36 +11,8 @@ extern mode DefaultBindingMode;
 extern mode *ActiveBindingMode;
 
 /*
-bool ParseHotkey(std::string KeySym, std::string Command, hotkey *Hotkey, bool Passthrough, bool KeycodeInHex)
-{
-    std::vector<std::string> KeyTokens = SplitString(KeySym, '-');
-    if(KeyTokens.size() != 2)
-        return false;
-
-    Hotkey->Mode = "default";
-    KwmParseHotkeyModifiers(Hotkey, KeyTokens[0]);
-    DetermineHotkeyState(Hotkey, Command);
-    Hotkey->Command = Command;
     if(Passthrough)
-        AddFlags(Hotkey, Hotkey_Modifier_Flag_Passthrough);
-
-    CGKeyCode Keycode;
-    bool Result = false;
-    if(KeycodeInHex)
-    {
-        Result = true;
-        Keycode = ConvertHexStringToInt(KeyTokens[1]);
-        DEBUG("bindcode: " << Keycode);
-    }
-    else
-    {
-        Result = LayoutIndependentKeycode(KeyTokens[1], &Keycode);
-        if(!Result)
-            Result = KeycodeFromChar(KeyTokens[1][0], &Keycode);
-    }
-
-    Hotkey->Key = Keycode;
-    return Result;
+        AddFlags(Hotkey, Hotkey_Flag_Passthrough);
 }
 */
 
@@ -51,7 +23,17 @@ Error(const char *Format, ...)
     va_start(Args, Format);
     vfprintf(stderr, Format, Args);
     va_end(Args);
+
     exit(EXIT_FAILURE);
+}
+
+internal void
+Notice(const char *Format, ...)
+{
+    va_list Args;
+    va_start(Args, Format);
+    vfprintf(stderr, Format, Args);
+    va_end(Args);
 }
 
 internal inline unsigned int
@@ -59,6 +41,14 @@ HexToInt(char *Hex)
 {
     uint32_t Result;
     sscanf(Hex, "%x", &Result);
+    return Result;
+}
+
+internal inline double
+StringToDouble(char *String)
+{
+    double Result;
+    sscanf(String, "%lf", &Result);
     return Result;
 }
 
@@ -137,56 +127,43 @@ ParseCommand(tokenizer *Tokenizer, hotkey *Hotkey)
     }
 }
 
-void AddHotkeyModifier(char *Mod, int Length, hotkey *Hotkey)
+internal inline void
+SetHotkeyMode(hotkey *Hotkey, char *Modifier)
+{
+    if(Hotkey->Mode)
+        free(Hotkey->Mode);
+
+    Hotkey->Mode = strdup(Modifier);
+}
+
+internal void
+AddHotkeyModifier(char *Mod, int Length, hotkey *Hotkey)
 {
     char *Modifier = AllocAndCopyString(Mod, Length);
     printf("Token_Modifier: %s\n", Modifier);
 
-    if(strcmp(Modifier, "cmd") == 0)
-    {
+    if(StringsAreEqual(Modifier, "cmd"))
         AddFlags(Hotkey, Hotkey_Flag_Cmd);
-    }
-    else if(strcmp(Modifier, "lcmd") == 0)
-    {
+    else if(StringsAreEqual(Modifier, "lcmd"))
         AddFlags(Hotkey, Hotkey_Flag_LCmd);
-    }
-    else if(strcmp(Modifier, "rcmd") == 0)
-    {
+    else if(StringsAreEqual(Modifier, "rcmd"))
         AddFlags(Hotkey, Hotkey_Flag_RCmd);
-    }
-    else if(strcmp(Modifier, "alt") == 0)
-    {
+    else if(StringsAreEqual(Modifier, "alt"))
         AddFlags(Hotkey, Hotkey_Flag_Alt);
-    }
-    else if(strcmp(Modifier, "lalt") == 0)
-    {
+    else if(StringsAreEqual(Modifier, "lalt"))
         AddFlags(Hotkey, Hotkey_Flag_LAlt);
-    }
-    else if(strcmp(Modifier, "ralt") == 0)
-    {
+    else if(StringsAreEqual(Modifier, "ralt"))
         AddFlags(Hotkey, Hotkey_Flag_RAlt);
-    }
-    else if(strcmp(Modifier, "shift") == 0)
-    {
+    else if(StringsAreEqual(Modifier, "shift"))
         AddFlags(Hotkey, Hotkey_Flag_Shift);
-    }
-    else if(strcmp(Modifier, "lshift") == 0)
-    {
+    else if(StringsAreEqual(Modifier, "lshift"))
         AddFlags(Hotkey, Hotkey_Flag_LShift);
-    }
-    else if(strcmp(Modifier, "rshift") == 0)
-    {
+    else if(StringsAreEqual(Modifier, "rshift"))
         AddFlags(Hotkey, Hotkey_Flag_RShift);
-    }
-    else if(strcmp(Modifier, "ctrl") == 0)
-    {
+    else if(StringsAreEqual(Modifier, "ctrl"))
         AddFlags(Hotkey, Hotkey_Flag_Control);
-    }
     else
-    {
-        free(Hotkey->Mode);
-        Hotkey->Mode = strdup(Modifier);
-    }
+        SetHotkeyMode(Hotkey, Modifier);
 
     free(Modifier);
 }
@@ -237,6 +214,8 @@ ParseIdentifier(token *Token, hotkey *Hotkey)
 
     if(Key.Length > 1)
     {
+        /* TODO(koekeishiya): Check if this is a hexadecimal input
+         * or a special key such as 'return'. */
         if(1)
         {
             Hotkey->Key = HexToInt(Key.Text);
@@ -257,6 +236,129 @@ ParseIdentifier(token *Token, hotkey *Hotkey)
     }
 
     return Result;
+}
+
+internal void
+ParseKhdModeActivate(tokenizer *Tokenizer)
+{
+    token TokenMode = GetToken(Tokenizer);
+    char *Mode = AllocAndCopyString(TokenMode.Text, TokenMode.Length);
+    ActivateMode(Mode);
+
+    free(Mode);
+}
+
+internal void
+ParseKhdModeProperties(token *TokenMode, tokenizer *Tokenizer)
+{
+    char *Mode = AllocAndCopyString(TokenMode->Text, TokenMode->Length);
+    mode *BindingMode = GetBindingMode(Mode);
+    if(!BindingMode)
+        BindingMode = CreateBindingMode(Mode);
+
+    token Token = GetToken(Tokenizer);
+    if(TokenEquals(Token, "prefix"))
+    {
+        token Token = GetToken(Tokenizer);
+        if(TokenEquals(Token, "on"))
+            BindingMode->Prefix = true;
+        else if(TokenEquals(Token, "off"))
+            BindingMode->Prefix = false;
+
+        printf("Prefix State: %d\n", BindingMode->Prefix);
+    }
+    else if(TokenEquals(Token, "timeout"))
+    {
+        token Token = GetToken(Tokenizer);
+        switch(Token.Type)
+        {
+            case Token_Digit:
+            {
+                char *Temp = AllocAndCopyString(Token.Text, Token.Length);
+                BindingMode->Timeout = StringToDouble(Temp);
+                printf("Prefix Timeout: %f\n", BindingMode->Timeout);
+                free(Temp);
+            } break;
+            default:
+            {
+                Notice("Expected token of type 'Token_Digit': %.*s\n", Token.Length, Token.Text);
+            };
+        }
+    }
+    else if(TokenEquals(Token, "color"))
+    {
+        token Token = GetToken(Tokenizer);
+        char *Temp = AllocAndCopyString(Token.Text, Token.Length);
+        BindingMode->Color = HexToInt(Temp);
+        printf("Prefix Color: %s : %u\n", Temp, BindingMode->Color);
+        free(Temp);
+    }
+    else if(TokenEquals(Token, "restore"))
+    {
+        token Token = GetToken(Tokenizer);
+        BindingMode->Restore = AllocAndCopyString(Token.Text, Token.Length);
+        printf("Prefix Restore: %s\n", BindingMode->Restore);
+    }
+
+    free(Mode);
+}
+
+internal void
+ParseKhdMode(tokenizer *Tokenizer)
+{
+    token Token = GetToken(Tokenizer);
+    switch(Token.Type)
+    {
+        case Token_EndOfStream:
+        {
+            Notice("Unexpected end of stream when parsing khd command!\n");
+        } break;
+        case Token_Identifier:
+        {
+            if(TokenEquals(Token, "activate"))
+                ParseKhdModeActivate(Tokenizer);
+            else
+                ParseKhdModeProperties(&Token, Tokenizer);
+        } break;
+        default:
+        {
+            Notice("Unexpected token '%.*s'\n", Token.Length, Token.Text);
+        } break;
+    }
+}
+
+internal void
+ParseKhd(tokenizer *Tokenizer)
+{
+    token Token = GetToken(Tokenizer);
+    switch(Token.Type)
+    {
+        case Token_EndOfStream:
+        {
+            Notice("Unexpected end of stream when parsing khd command!\n");
+        } break;
+        case Token_Identifier:
+        {
+            if(TokenEquals(Token, "reload"))
+            {
+                // TODO(koekeishiya): Reload config file.
+            }
+            else if(TokenEquals(Token, "mode"))
+            {
+                ParseKhdMode(Tokenizer);
+            }
+        } break;
+        default:
+        {
+            Notice("Unexpected token '%.*s'\n", Token.Length, Token.Text);
+        } break;
+    }
+}
+
+void ParseKhd(char *Contents)
+{
+    tokenizer Tokenizer = { Contents };
+    ParseKhd(&Tokenizer);
 }
 
 // TODO(koekeishiya): We want to clear existing config information before reloading.
@@ -280,14 +382,21 @@ void ParseConfig(char *Contents)
             } break;
             case Token_Identifier:
             {
-                hotkey *Hotkey = AllocHotkey();
-                if(ParseIdentifier(&Token, Hotkey))
+                if(TokenEquals(Token, "khd"))
                 {
-                    ParseCommand(&Tokenizer, Hotkey);
+                    ParseKhd(&Tokenizer);
                 }
                 else
                 {
-                    Error("Invalid format for identifier: %.*s\n", Token.Length, Token.Text);
+                    hotkey *Hotkey = AllocHotkey();
+                    if(ParseIdentifier(&Token, Hotkey))
+                    {
+                        ParseCommand(&Tokenizer, Hotkey);
+                    }
+                    else
+                    {
+                        Error("Invalid format for identifier: %.*s\n", Token.Length, Token.Text);
+                    }
                 }
             } break;
             default:

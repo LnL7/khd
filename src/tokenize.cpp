@@ -102,7 +102,8 @@ token GetToken(tokenizer *Tokenizer)
                 else
                 {
                     while((Tokenizer->At[0]) &&
-                          (IsNumeric(Tokenizer->At[0])))
+                          (IsNumeric(Tokenizer->At[0]) ||
+                           IsDot(Tokenizer->At[0])))
                         ++Tokenizer->At;
 
                     Token.Type = Token_Digit;

@@ -30,6 +30,14 @@ struct tokenizer
 };
 
 inline bool
+IsDot(char C)
+{
+    bool Result = ((C == '.') ||
+                   (C == ','));
+    return Result;
+}
+
+inline bool
 IsEndOfLine(char C)
 {
     bool Result = ((C == '\n') ||

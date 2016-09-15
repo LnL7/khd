@@ -9,7 +9,6 @@
 #include "daemon.h"
 #include "parse.h"
 #include "hotkey.h"
-#include "event.h"
 
 #define internal static
 extern "C" bool CGSIsSecureEventInputSet();
@@ -52,15 +51,15 @@ KeyCallback(CGEventTapProxy Proxy, CGEventType Type, CGEventRef Event, void *Con
             {
                 if(HotkeyForCGEvent(Event, Hotkey))
                 {
-                    printf("matched hotkey\n");
                     bool Passthrough = HasFlags(Hotkey, Hotkey_Flag_Passthrough);
-                    ConstructEvent(Event_Hotkey, Hotkey);
+                    Execute(Hotkey->Command);
+                    free(Hotkey);
                     if(!Passthrough)
                         return NULL;
                 }
                 else
                 {
-                    printf("key pressed\n");
+                    // printf("key pressed\n");
                     free(Hotkey);
                 }
             }
@@ -200,7 +199,6 @@ int main(int Count, char **Args)
         Error("Khd: Could not start daemon! Terminating.\n");
 
     Init();
-    StartEventLoop();
     ConfigureRunLoop();
     CFRunLoopRun();
 

@@ -1,6 +1,5 @@
 #include "hotkey.h"
 #include "locale.h"
-#include "event.h"
 #include <string.h>
 
 #define internal static
@@ -13,8 +12,7 @@ extern uint32_t Compatibility;
 internal const char *Shell = "/bin/bash";
 internal const char *ShellArgs = "-c";
 
-internal void
-Execute(char *Command)
+void Execute(char *Command)
 {
     int ChildPID = fork();
     if(ChildPID == 0)
@@ -23,29 +21,6 @@ Execute(char *Command)
         int StatusCode = execvp(Exec[0], Exec);
         exit(StatusCode);
     }
-}
-
-EVENT_CALLBACK(Callback_Event_Hotkey)
-{
-    hotkey *Hotkey = (hotkey *) Event->Context;
-
-    if(Hotkey->Command)
-    {
-        Execute(Hotkey->Command);
-
-        /* TODO(koekeishiya): Update timer if prefix mode is enabled.
-        if(ActiveMode->Prefix)
-        {
-            ActiveMode->Time = std::chrono::steady_clock::now();
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, ActiveMode->Timeout * NSEC_PER_SEC), dispatch_get_main_queue(),
-            ^{
-                CheckPrefixTimeout();
-            });
-        }
-        */
-    }
-
-    free(Hotkey);
 }
 
 mode *CreateBindingMode(char *Mode)
@@ -104,6 +79,17 @@ void ActivateMode(char *Mode)
             strcat(KwmCommand, ActiveBindingMode->Color);
             Execute(KwmCommand);
         }
+
+        /*
+        if(ActiveBindingMode->Prefix)
+        {
+            ActiveBindingMode->Time = std::chrono::steady_clock::now();
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, BindingMode->Timeout * NSEC_PER_SEC), dispatch_get_main_queue(),
+            ^{
+                CheckPrefixTimeout();
+            });
+        }
+        */
     }
 }
 

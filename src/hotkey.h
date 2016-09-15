@@ -79,6 +79,7 @@ HasFlags(hotkey *Hotkey, uint32_t Flag)
     return Result;
 }
 
+void Execute(char *Command);
 bool HotkeyForCGEvent(CGEventRef Event, hotkey *Hotkey);
 
 mode *CreateBindingMode(char *Mode);

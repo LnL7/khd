@@ -223,9 +223,7 @@ HotkeyExists(uint32_t Flags, CGKeyCode Keycode, hotkey *Result, char *Mode)
         {
             if(HotkeysAreEqual(Hotkey, &TempHotkey))
             {
-                if(Result)
-                    *Result = *Hotkey;
-
+                *Result = *Hotkey;
                 return true;
             }
 
@@ -240,4 +238,31 @@ bool HotkeyForCGEvent(CGEventRef Event, hotkey *Hotkey)
 {
     hotkey Eventkey = CreateHotkeyFromCGEvent(Event);
     return HotkeyExists(Eventkey.Flags, Eventkey.Key, Hotkey, ActiveBindingMode->Name);
+}
+
+void SendKeySequence(char *Sequence)
+{
+    CFStringRef SequenceRef = CFStringCreateWithCString(NULL, Sequence, kCFStringEncodingMacRoman);
+    CGEventRef KeyDownEvent = CGEventCreateKeyboardEvent(NULL, 0, true);
+    CGEventRef KeyUpEvent = CGEventCreateKeyboardEvent(NULL, 0, false);
+
+    UniChar OutputBuffer;
+    for(size_t Index = 0;
+        *Sequence != '\0';
+        ++Index, ++Sequence)
+    {
+        CFStringGetCharacters(SequenceRef, CFRangeMake(Index, 1), &OutputBuffer);
+
+        CGEventSetFlags(KeyDownEvent, 0);
+        CGEventKeyboardSetUnicodeString(KeyDownEvent, 1, &OutputBuffer);
+        CGEventPost(kCGHIDEventTap, KeyDownEvent);
+
+        CGEventSetFlags(KeyUpEvent, 0);
+        CGEventKeyboardSetUnicodeString(KeyUpEvent, 1, &OutputBuffer);
+        CGEventPost(kCGHIDEventTap, KeyUpEvent);
+    }
+
+    CFRelease(KeyUpEvent);
+    CFRelease(KeyDownEvent);
+    CFRelease(SequenceRef);
 }

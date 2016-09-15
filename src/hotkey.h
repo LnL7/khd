@@ -87,4 +87,6 @@ mode *GetBindingMode(char *Mode);
 mode *GetLastBindingMode();
 void ActivateMode(char *Mode);
 
+void SendKeySequence(char *Sequence);
+
 #endif

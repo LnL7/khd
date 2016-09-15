@@ -141,12 +141,13 @@ internal inline bool
 ParseArguments(int Count, char **Args)
 {
     int Option;
-    const char *Short = "vc:e:";
+    const char *Short = "vc:e:w:";
     struct option Long[] =
     {
         { "version", no_argument, NULL, 'v' },
         { "config", required_argument, NULL, 'c' },
         { "emit", required_argument, NULL, 'e' },
+        { "write", required_argument, NULL, 'w' },
         { NULL, 0, NULL, 0 }
     };
 
@@ -164,16 +165,18 @@ ParseArguments(int Count, char **Args)
                 ConfigFile = strdup(optarg);
                 printf("Khd: Using config '%s'\n", ConfigFile);
             } break;
+            case 'w':
+            {
+                SendKeySequence(optarg);
+                exit(EXIT_SUCCESS);
+            } break;
             case 'e':
             {
                 int SockFD;
                 if(ConnectToDaemon(&SockFD))
                 {
-                    char *Emit = strdup(optarg);
-                    printf("emitting '%s'\n", Emit);
-                    WriteToSocket(Emit, SockFD);
+                    WriteToSocket(optarg, SockFD);
                     CloseSocket(SockFD);
-                    free(Emit);
                     exit(EXIT_SUCCESS);
                 }
                 else

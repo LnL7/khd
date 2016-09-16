@@ -90,6 +90,7 @@ token GetToken(tokenizer *Tokenizer)
                 }
                 else
                 {
+                    EatAllWhiteSpace(Tokenizer);
                     Token.Text = Tokenizer->At;
                     if((IsAlpha(Tokenizer->At[0])) ||
                        (IsNumeric(Tokenizer->At[0])))

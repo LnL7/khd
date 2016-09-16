@@ -4,10 +4,14 @@
 # the specified message is sent to a running instance of khd through a socket.
 
 # NOTE(koekeishiya): A bind is written in the form:
-#                   <keysym> : <command>
+#                   <keysym> [->] : <command>
 #                   where
 #                       <keysym>   = mode+mod+...+mod-literal
 #                       <keysym>   = mode+mod+...+mod-keycode (must have 0x prefix)
+#
+#                       [->]       = optional operator '->' that marks this bind as
+#                                    'passthrough'. this causes the key to be passed
+#                                    through to the system, instead of being consumed.
 #
 #                       <command>  = command is executed through '/bin/bash -c' and
 #                                    follows valid shell syntax. Thus, to execute
@@ -18,16 +22,23 @@
 #
 #                                    An EOL character signifies the end of the bind.
 
+# NOTE(koekeishiya): specify arrow operator '->' to mark bind as passthrough
+# shift-0x27 -> : echo "multiline command with passthrough" |\
+#                 alerter -title Test passthrough -timeout 2;\
+#                 echo "end of command" | alerter -title End -timeout 2
+
+# NOTE(koekeishiya): Crazy syntax test, parses and executes properly
+# cmd   +
+#   alt   +   ctrl
+#        -m->     :
+#                   echo "inconsistent whitspace and multiline command with passthrough" |\
+#                   alerter -title Test passthrough -timeout 2;\
+#                   echo "end of command" | alerter -title End -timeout 2
+
 # NOTE(koekeishiya): Enable prefix mode
 # khd mode my_mode prefix on
 # khd mode my_mode timeout 0.75
 # khd mode my_mode restore default
-
-# TODO(koekeishiya): specify arrow operator (->) to mark passthrough ?
-# cmd-0x27 -> :
-#              echo "multiline command with passthrough" |\
-#              alerter -title Test passthrough -timeout 2;\
-#              echo "end of command" | alerter -title End -timeout 2
 
 # TODO(koekeishiya): possibly allow combined syntax such as
 # switcher-[h,j,k,l] : kwmc window -f [west, south, north, east]
@@ -69,8 +80,7 @@ switcher-q          :   khd -e "mode activate info"
 
 
 # switcher mode
-# 0x24 == return
-switcher-0x24       :   open -na /Applications/HyperTerm.app;\
+switcher-return     :   open -na /Applications/HyperTerm.app;\
                         khd -e "mode activate default"
 
 switcher-h          :   kwmc window -f west

@@ -13,12 +13,6 @@ extern mode DefaultBindingMode;
 extern mode *ActiveBindingMode;
 extern uint32_t Compatibility;
 
-/*
-    if(Passthrough)
-        AddFlags(Hotkey, Hotkey_Flag_Passthrough);
-}
-*/
-
 internal void
 Error(const char *Format, ...)
 {
@@ -109,6 +103,12 @@ ParseCommand(tokenizer *Tokenizer, hotkey *Hotkey)
     token Command = GetToken(Tokenizer);
     switch(Command.Type)
     {
+        case Token_Passthrough:
+        {
+            AddFlags(Hotkey, Hotkey_Flag_Passthrough);
+            printf("Token_Passthrough: %.*s\n", Command.Length, Command.Text);
+            ParseCommand(Tokenizer, Hotkey);
+        } break;
         case Token_Command:
         {
             StripTrailingWhiteSpace(&Command);
@@ -164,74 +164,63 @@ AddHotkeyModifier(char *Mod, int Length, hotkey *Hotkey)
     free(Modifier);
 }
 
-internal bool
-ParseIdentifier(token *Token, hotkey *Hotkey)
+internal void
+ParseKeyHexadecimal(tokenizer *Tokenizer, token *Token, hotkey *Hotkey)
 {
-    bool Result = true;
+    char *Temp = AllocAndCopyString(Token->Text, Token->Length);
+    Hotkey->Key = HexToInt(Temp);
+    free(Temp);
 
-    int At = 0;
-    bool KeyDelim = false;
-    token Key = {};
+    ParseCommand(Tokenizer, Hotkey);
+}
 
-    for(int Index = 0;
-        Index < Token->Length;
-        ++Index)
-    {
-        char C = Token->Text[Index];
-        switch(C)
-        {
-            case '+':
-            case '-':
-            {
-                char *Mod = Token->Text + At;
-                int Length = Index - At;
+internal void
+ParseKeyLiteral(tokenizer *Tokenizer, token *Token, hotkey *Hotkey)
+{
+    char *Temp = AllocAndCopyString(Token->Text, Token->Length);
+    bool Result = false;
 
-                if(Length > 0)
-                {
-                    AddHotkeyModifier(Mod, Length, Hotkey);
-                }
-
-                if(C == '-')
-                    KeyDelim = true;
-
-                At = Index + 1;
-            } break;
-            default:
-            {
-                if(KeyDelim && Index == Token->Length - 1)
-                {
-                    Key.Length = Index - At + 1;
-                    Key.Text = AllocAndCopyString(Token->Text + At, Key.Length);
-                    printf("Token_Key: %s\n", Key.Text);
-                }
-            } break;
-        }
-    }
-
-    if(Key.Length > 1)
-    {
-        /* TODO(koekeishiya): Check if this is a hexadecimal input
-         * or a special key such as 'return'. */
-        if(1)
-        {
-            Hotkey->Key = HexToInt(Key.Text);
-        }
-        else
-        {
-            Result = LayoutIndependentKeycode(Key.Text, Hotkey);
-        }
-    }
-    else if(Key.Length == 1)
-    {
-        Result = KeycodeFromChar(Key.Text[0], Hotkey);
-    }
+    if(Token->Length > 1)
+        Result = LayoutIndependentKeycode(Temp, Hotkey);
     else
-    {
-        printf("No key specified!\n");
-        Result = false;
-    }
+        Result = KeycodeFromChar(Temp[0], Hotkey);
 
-    return Result;
+    if(Result)
+        ParseCommand(Tokenizer, Hotkey);
+    else
+        Error("Invalid format for key literal: %.*s\n", Token->Length, Token->Text);
+
+    free(Temp);
+}
+
+internal void
+ParseKeySym(tokenizer *Tokenizer, token *Token, hotkey *Hotkey)
+{
+    AddHotkeyModifier(Token->Text, Token->Length, Hotkey);
+
+    token Symbol = GetToken(Tokenizer);
+    switch(Symbol.Type)
+    {
+        case Token_Plus:
+        {
+            token Symbol = GetToken(Tokenizer);
+            ParseKeySym(Tokenizer, &Symbol, Hotkey);
+        } break;
+        case Token_Hex:
+        {
+            printf("Token_Hex: %.*s\n", Symbol.Length, Symbol.Text);
+            ParseKeyHexadecimal(Tokenizer, &Symbol, Hotkey);
+        } break;
+        case Token_Literal:
+        {
+            printf("Token_Literal: %.*s\n", Symbol.Length, Symbol.Text);
+            ParseKeyLiteral(Tokenizer, &Symbol, Hotkey);
+        } break;
+        default:
+        {
+            Error("Invalid format for keysym: %.*s\n", Symbol.Length, Symbol.Text);
+        } break;
+    }
 }
 
 internal void
@@ -396,6 +385,18 @@ void ParseConfig(char *Contents)
             {
                 printf("Token_Comment: %.*s\n", Token.Length, Token.Text);
             } break;
+            case Token_Hex:
+            {
+                printf("Token_Hex: %.*s\n", Token.Length, Token.Text);
+                hotkey *Hotkey = AllocHotkey();
+                ParseKeyHexadecimal(&Tokenizer, &Token, Hotkey);
+            } break;
+            case Token_Literal:
+            {
+                printf("Token_Literal: %.*s\n", Token.Length, Token.Text);
+                hotkey *Hotkey = AllocHotkey();
+                ParseKeyLiteral(&Tokenizer, &Token, Hotkey);
+            } break;
             case Token_Identifier:
             {
                 if(TokenEquals(Token, "khd"))
@@ -405,14 +406,7 @@ void ParseConfig(char *Contents)
                 else
                 {
                     hotkey *Hotkey = AllocHotkey();
-                    if(ParseIdentifier(&Token, Hotkey))
-                    {
-                        ParseCommand(&Tokenizer, Hotkey);
-                    }
-                    else
-                    {
-                        Error("Invalid format for identifier: %.*s\n", Token.Length, Token.Text);
-                    }
+                    ParseKeySym(&Tokenizer, &Token, Hotkey);
                 }
             } break;
             default:

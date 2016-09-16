@@ -2,6 +2,7 @@
 #define KHD_HOTKEY_H
 
 #include <stdint.h>
+#include <time.h>
 #include <Carbon/Carbon.h>
 
 enum osx_event_mask
@@ -50,6 +51,7 @@ struct mode
     bool Prefix;
     double Timeout;
     char *Restore;
+    timespec Time;
 
     hotkey *Hotkey;
     mode *Next;
@@ -82,11 +84,11 @@ HasFlags(hotkey *Hotkey, uint32_t Flag)
 void Execute(char *Command);
 bool HotkeyForCGEvent(CGEventRef Event, hotkey *Hotkey);
 
-mode *CreateBindingMode(char *Mode);
-mode *GetBindingMode(char *Mode);
+mode *CreateBindingMode(const char *Mode);
+mode *GetBindingMode(const char *Mode);
 mode *GetLastBindingMode();
-void ActivateMode(char *Mode);
+void ActivateMode(const char *Mode);
 
-void SendKeySequence(char *Sequence);
+void SendKeySequence(const char *Sequence);
 
 #endif

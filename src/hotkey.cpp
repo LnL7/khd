@@ -1,11 +1,54 @@
 #include "hotkey.h"
 #include "locale.h"
 #include <string.h>
+#include <time.h>
+#include <mach/mach_time.h>
 
 #define internal static
+#define local_persist static
+#define CLOCK_PRECISION 1E-9
+
 extern mode DefaultBindingMode;
 extern mode *ActiveBindingMode;
 extern uint32_t Compatibility;
+
+internal inline void
+ClockGetTime(timespec *Time)
+{
+    local_persist mach_timebase_info_data_t Timebase;
+    mach_timebase_info(&Timebase);
+    uint64_t Temp = mach_absolute_time();
+    Time->tv_nsec = (Temp * Timebase.numer) / Timebase.denom;
+}
+
+internal inline double
+GetTimeDiff(timespec *Time)
+{
+    return (Time->tv_nsec - ActiveBindingMode->Time.tv_nsec) * CLOCK_PRECISION;
+}
+
+internal inline void
+UpdatePrefixTimer()
+{
+    ClockGetTime(&ActiveBindingMode->Time);
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, ActiveBindingMode->Timeout * NSEC_PER_SEC),
+                   dispatch_get_main_queue(),
+    ^{
+        if(ActiveBindingMode->Prefix)
+        {
+            timespec Time;
+            ClockGetTime(&Time);
+
+            if(GetTimeDiff(&Time) >= ActiveBindingMode->Timeout)
+            {
+                if(ActiveBindingMode->Restore)
+                    ActivateMode(ActiveBindingMode->Restore);
+                else
+                    ActivateMode("default");
+            }
+        }
+    });
+}
 
 /* TODO(koekeishiya): We probably want the user to be able to specify
  * which shell they want to use. */
@@ -21,9 +64,45 @@ void Execute(char *Command)
         int StatusCode = execvp(Exec[0], Exec);
         exit(StatusCode);
     }
+
+    if(ActiveBindingMode->Prefix)
+        UpdatePrefixTimer();
 }
 
-mode *CreateBindingMode(char *Mode)
+internal inline void
+ExecuteKwmBorderCommand()
+{
+    char KwmCommand[64] = "kwmc config border focused color ";
+    strcat(KwmCommand, ActiveBindingMode->Color);
+
+    int ChildPID = fork();
+    if(ChildPID == 0)
+    {
+        char *Exec[] = { (char *) Shell, (char *) ShellArgs, KwmCommand, NULL};
+        int StatusCode = execvp(Exec[0], Exec);
+        exit(StatusCode);
+    }
+}
+
+void ActivateMode(const char *Mode)
+{
+    mode *BindingMode = GetBindingMode(Mode);
+    if(BindingMode)
+    {
+        printf("Activate mode: %s\n", Mode);
+        ActiveBindingMode = BindingMode;
+
+        /* TODO(koekeishiya): Clean up 'Kwm' compatibility mode */
+        if((Compatibility & (1 << 0)) &&
+           (ActiveBindingMode->Color))
+            ExecuteKwmBorderCommand();
+
+        if(ActiveBindingMode->Prefix)
+            UpdatePrefixTimer();
+    }
+}
+
+mode *CreateBindingMode(const char *Mode)
 {
     mode *Result = (mode *) malloc(sizeof(mode));
     memset(Result, 0, sizeof(mode));
@@ -43,7 +122,7 @@ mode *GetLastBindingMode()
     return BindingMode;
 }
 
-mode *GetBindingMode(char *Mode)
+mode *GetBindingMode(const char *Mode)
 {
     mode *Result = NULL;
 
@@ -60,37 +139,6 @@ mode *GetBindingMode(char *Mode)
     }
 
     return Result;
-}
-
-void ActivateMode(char *Mode)
-{
-    mode *BindingMode = GetBindingMode(Mode);
-    if(BindingMode)
-    {
-        printf("Activate mode: %s\n", Mode);
-        ActiveBindingMode = BindingMode;
-
-        /* TODO(koekeishiya): We need some sort of 'Kwm' compatibility mode
-         * to automatically issue 'kwmc config border focused color Mode->Color' */
-        if((Compatibility & (1 << 0)) &&
-           (ActiveBindingMode->Color))
-        {
-            char KwmCommand[64] = "kwmc config border focused color ";
-            strcat(KwmCommand, ActiveBindingMode->Color);
-            Execute(KwmCommand);
-        }
-
-        /*
-        if(ActiveBindingMode->Prefix)
-        {
-            ActiveBindingMode->Time = std::chrono::steady_clock::now();
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, BindingMode->Timeout * NSEC_PER_SEC), dispatch_get_main_queue(),
-            ^{
-                CheckPrefixTimeout();
-            });
-        }
-        */
-    }
 }
 
 internal inline bool
@@ -209,7 +257,7 @@ CreateHotkeyFromCGEvent(CGEventRef Event)
 }
 
 internal bool
-HotkeyExists(uint32_t Flags, CGKeyCode Keycode, hotkey *Result, char *Mode)
+HotkeyExists(uint32_t Flags, CGKeyCode Keycode, hotkey *Result, const char *Mode)
 {
     hotkey TempHotkey = {};
     TempHotkey.Flags = Flags;
@@ -240,7 +288,7 @@ bool HotkeyForCGEvent(CGEventRef Event, hotkey *Hotkey)
     return HotkeyExists(Eventkey.Flags, Eventkey.Key, Hotkey, ActiveBindingMode->Name);
 }
 
-void SendKeySequence(char *Sequence)
+void SendKeySequence(const char *Sequence)
 {
     CFStringRef SequenceRef = CFStringCreateWithCString(NULL, Sequence, kCFStringEncodingMacRoman);
     CGEventRef KeyDownEvent = CGEventCreateKeyboardEvent(NULL, 0, true);

@@ -3,6 +3,21 @@
 # NOTE(koekeishiya): when khd is launched with the '-e' (--emit) flag,
 # the specified message is sent to a running instance of khd through a socket.
 
+# NOTE(koekeishiya): A bind is written in the form:
+#                   <keysym> : <command>
+#                   where
+#                       <keysym>   = mode+mod+...+mod-literal
+#                       <keysym>   = mode+mod+...+mod-keycode (must have 0x prefix)
+#
+#                       <command>  = command is executed through '/bin/bash -c' and
+#                                    follows valid shell syntax. Thus, to execute
+#                                    multiple comands, use the ';' delimeter.
+#
+#                                    To allow a command to extend into multiple lines,
+#                                    prepend '\' at the end of the previous line.
+#
+#                                    An EOL character signifies the end of the bind.
+
 # TODO(koekeishiya): these settings are parsed and applied properly,
 # however, they have not yet been implemented.
 khd mode prefix prefix on
@@ -19,26 +34,6 @@ khd mode prefix restore default
 # TODO(koekeishiya): possibly allow combined syntax such as
 # switcher-[h,j,k,l] : kwmc window -f [west, south, north, east]
 # [switcher,ytd]+ctrl-f : khd -e "mode activate default"
-
-# NOTE(koekeishiya): bind through keycode
-# cmd-0x27 :
-#     echo "Bind through keycode" |\
-#     alerter -Title Keycode -timeout 3
-
-# NOTE(koekeishiya): A bind is written in the form:
-#                   <keysym> : <command>
-#                   where
-#                       <keysym>   = mode+mod+...+mod-literal
-#                       <keysym>   = mode+mod+...+mod-keycode (must have 0x prefix)
-#
-#                       <command>  = command is executed through '/bin/bash -c' and
-#                                    follows valid shell syntax. Thus, to execute
-#                                    multiple comands, use the ';' delimeter.
-#
-#                                    To allow a command to extend into multiple lines,
-#                                    prepend '\' at the end of the previous line.
-#
-#                                    An EOL character signifies the end of the bind.
 
 
 

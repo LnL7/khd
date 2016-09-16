@@ -5,7 +5,10 @@ enum token_type
 {
     Token_Identifier,
     Token_Command,
+    Token_Literal,
+    Token_Passthrough,
 
+    Token_Plus,
     Token_OpenBrace,
     Token_CloseBrace,
 
@@ -60,9 +63,7 @@ inline bool
 IsAlpha(char C)
 {
     bool Result = (((C >= 'a') && (C <= 'z')) ||
-                   ((C >= 'A') && (C <= 'Z')) ||
-                   ((C == '+')) ||
-                   ((C == '-')));
+                   ((C >= 'A') && (C <= 'Z')));
 
     return Result;
 }

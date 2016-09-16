@@ -48,6 +48,9 @@ token GetToken(tokenizer *Tokenizer)
     switch(C)
     {
         case '\0': { Token.Type = Token_EndOfStream; } break;
+        case '{': { Token.Type = Token_OpenBrace; } break;
+        case '}': { Token.Type = Token_CloseBrace; } break;
+        case '+': { Token.Type = Token_Plus; } break;
         case ':':
         {
             EatAllWhiteSpace(Tokenizer);
@@ -65,10 +68,6 @@ token GetToken(tokenizer *Tokenizer)
             Token.Type = Token_Command;
             Token.Length = Tokenizer->At - Token.Text;
         } break;
-        case '}':
-        {
-            Token.Type = Token_CloseBrace;
-        } break;
         case '#':
         {
             Token.Text = Tokenizer->At;
@@ -78,6 +77,49 @@ token GetToken(tokenizer *Tokenizer)
 
             Token.Type = Token_Comment;
             Token.Length = Tokenizer->At - Token.Text;
+        } break;
+        case '-':
+        {
+            if(Tokenizer->At[0])
+            {
+                if(Tokenizer->At[0] == '>')
+                {
+                    ++Tokenizer->At;
+                    Token.Type = Token_Passthrough;
+                    Token.Length = Tokenizer->At - Token.Text;
+                }
+                else
+                {
+                    Token.Text = Tokenizer->At;
+                    if((IsAlpha(Tokenizer->At[0])) ||
+                       (IsNumeric(Tokenizer->At[0])))
+                    {
+                        ++Tokenizer->At;
+                        if((Tokenizer->At[0]) &&
+                           (Tokenizer->At[0] == 'x' ||
+                            Tokenizer->At[0] == 'X'))
+                        {
+                            ++Tokenizer->At;
+                            while((Tokenizer->At[0]) &&
+                                  (IsHexadecimal(Tokenizer->At[0])))
+                                ++Tokenizer->At;
+
+                            Token.Type = Token_Hex;
+                            Token.Length = Tokenizer->At - Token.Text;
+                        }
+                        else
+                        {
+                            while((Tokenizer->At[0]) &&
+                                  (IsAlpha(Tokenizer->At[0]) ||
+                                  (IsNumeric(Tokenizer->At[0]))))
+                                ++Tokenizer->At;
+
+                            Token.Type = Token_Literal;
+                            Token.Length = Tokenizer->At - Token.Text;
+                        }
+                    }
+                }
+            }
         } break;
         default:
         {

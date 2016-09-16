@@ -18,12 +18,10 @@
 #
 #                                    An EOL character signifies the end of the bind.
 
-# TODO(koekeishiya): these settings are parsed and applied properly,
-# however, they have not yet been implemented.
-khd mode prefix prefix on
-khd mode prefix timeout 0.75
-khd mode prefix restore default
-####################################################################
+# NOTE(koekeishiya): Enable prefix mode
+# khd mode my_mode prefix on
+# khd mode my_mode timeout 0.75
+# khd mode my_mode restore default
 
 # TODO(koekeishiya): specify arrow operator (->) to mark passthrough ?
 # cmd-0x27 -> :

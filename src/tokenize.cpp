@@ -48,14 +48,19 @@ token GetToken(tokenizer *Tokenizer)
     switch(C)
     {
         case '\0': { Token.Type = Token_EndOfStream; } break;
-        case '{':
+        case ':':
         {
             EatAllWhiteSpace(Tokenizer);
             Token.Text = Tokenizer->At;
 
             while((Tokenizer->At[0]) &&
-                  (Tokenizer->At[0] != '}'))
+                  (!IsEndOfLine(Tokenizer->At[0])))
+            {
+                if(Tokenizer->At[0] == '\\')
+                    ++Tokenizer->At;
+
                 ++Tokenizer->At;
+            }
 
             Token.Type = Token_Command;
             Token.Length = Tokenizer->At - Token.Text;

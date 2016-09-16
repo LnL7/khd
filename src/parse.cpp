@@ -111,17 +111,10 @@ ParseCommand(tokenizer *Tokenizer, hotkey *Hotkey)
     {
         case Token_Command:
         {
-            if(RequireToken(Tokenizer, Token_CloseBrace))
-            {
-                StripTrailingWhiteSpace(&Command);
-                Hotkey->Command = AllocAndCopyString(Command.Text, Command.Length);
-                AppendHotkey(Hotkey);
-                printf("Token_Command: %s\n", Hotkey->Command);
-            }
-            else
-            {
-                Error("Expected 'Token_CloseBrace' to end a command!\n");
-            }
+            StripTrailingWhiteSpace(&Command);
+            Hotkey->Command = AllocAndCopyString(Command.Text, Command.Length);
+            AppendHotkey(Hotkey);
+            printf("Token_Command: %s\n", Hotkey->Command);
         } break;
         default:
         {

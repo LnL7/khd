@@ -165,17 +165,18 @@ AddHotkeyModifier(char *Mod, int Length, hotkey *Hotkey)
 }
 
 internal void
-ParseKeyHexadecimal(tokenizer *Tokenizer, token *Token, hotkey *Hotkey)
+ParseKeyHexadecimal(tokenizer *Tokenizer, token *Token, hotkey *Hotkey, bool ExpectCommand)
 {
     char *Temp = AllocAndCopyString(Token->Text, Token->Length);
     Hotkey->Key = HexToInt(Temp);
     free(Temp);
 
-    ParseCommand(Tokenizer, Hotkey);
+    if(ExpectCommand)
+        ParseCommand(Tokenizer, Hotkey);
 }
 
 internal void
-ParseKeyLiteral(tokenizer *Tokenizer, token *Token, hotkey *Hotkey)
+ParseKeyLiteral(tokenizer *Tokenizer, token *Token, hotkey *Hotkey, bool ExpectCommand)
 {
     char *Temp = AllocAndCopyString(Token->Text, Token->Length);
     bool Result = false;
@@ -185,16 +186,16 @@ ParseKeyLiteral(tokenizer *Tokenizer, token *Token, hotkey *Hotkey)
     else
         Result = KeycodeFromChar(Temp[0], Hotkey);
 
-    if(Result)
+    if(Result && ExpectCommand)
         ParseCommand(Tokenizer, Hotkey);
-    else
+    else if(!Result)
         Error("Invalid format for key literal: %.*s\n", Token->Length, Token->Text);
 
     free(Temp);
 }
 
 internal void
-ParseKeySym(tokenizer *Tokenizer, token *Token, hotkey *Hotkey)
+ParseKeySym(tokenizer *Tokenizer, token *Token, hotkey *Hotkey, bool ExpectCommand)
 {
     AddHotkeyModifier(Token->Text, Token->Length, Hotkey);
 
@@ -204,17 +205,17 @@ ParseKeySym(tokenizer *Tokenizer, token *Token, hotkey *Hotkey)
         case Token_Plus:
         {
             token Symbol = GetToken(Tokenizer);
-            ParseKeySym(Tokenizer, &Symbol, Hotkey);
+            ParseKeySym(Tokenizer, &Symbol, Hotkey, ExpectCommand);
         } break;
         case Token_Hex:
         {
             printf("Token_Hex: %.*s\n", Symbol.Length, Symbol.Text);
-            ParseKeyHexadecimal(Tokenizer, &Symbol, Hotkey);
+            ParseKeyHexadecimal(Tokenizer, &Symbol, Hotkey, ExpectCommand);
         } break;
         case Token_Literal:
         {
             printf("Token_Literal: %.*s\n", Symbol.Length, Symbol.Text);
-            ParseKeyLiteral(Tokenizer, &Symbol, Hotkey);
+            ParseKeyLiteral(Tokenizer, &Symbol, Hotkey, ExpectCommand);
         } break;
         default:
         {
@@ -366,6 +367,19 @@ void ParseKhd(char *Contents)
     ParseKhd(&Tokenizer);
 }
 
+void ParseKeySym(char *KeySym, hotkey *Hotkey)
+{
+    tokenizer Tokenizer = { KeySym };
+    token Token = GetToken(&Tokenizer);
+    switch(Token.Type)
+    {
+        case Token_Hex: { ParseKeyHexadecimal(&Tokenizer, &Token, Hotkey, false); } break;
+        case Token_Literal: { ParseKeyLiteral(&Tokenizer, &Token, Hotkey, false); } break;
+        case Token_Identifier: { ParseKeySym(&Tokenizer, &Token, Hotkey, false); } break;
+        default: { Error("Invalid format for keysym: %.*s\n", Token.Length, Token.Text); } break;
+    }
+}
+
 // TODO(koekeishiya): We want to clear existing config information before reloading.
 // The active binding mode should also be pointing to the 'default' mode.
 void ParseConfig(char *Contents)
@@ -389,13 +403,13 @@ void ParseConfig(char *Contents)
             {
                 printf("Token_Hex: %.*s\n", Token.Length, Token.Text);
                 hotkey *Hotkey = AllocHotkey();
-                ParseKeyHexadecimal(&Tokenizer, &Token, Hotkey);
+                ParseKeyHexadecimal(&Tokenizer, &Token, Hotkey, true);
             } break;
             case Token_Literal:
             {
                 printf("Token_Literal: %.*s\n", Token.Length, Token.Text);
                 hotkey *Hotkey = AllocHotkey();
-                ParseKeyLiteral(&Tokenizer, &Token, Hotkey);
+                ParseKeyLiteral(&Tokenizer, &Token, Hotkey, true);
             } break;
             case Token_Identifier:
             {
@@ -406,7 +420,7 @@ void ParseConfig(char *Contents)
                 else
                 {
                     hotkey *Hotkey = AllocHotkey();
-                    ParseKeySym(&Tokenizer, &Token, Hotkey);
+                    ParseKeySym(&Tokenizer, &Token, Hotkey, true);
                 }
             } break;
             default:

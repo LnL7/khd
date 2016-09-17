@@ -141,13 +141,14 @@ internal inline bool
 ParseArguments(int Count, char **Args)
 {
     int Option;
-    const char *Short = "vc:e:w:";
+    const char *Short = "vc:e:w:p:";
     struct option Long[] =
     {
         { "version", no_argument, NULL, 'v' },
         { "config", required_argument, NULL, 'c' },
         { "emit", required_argument, NULL, 'e' },
         { "write", required_argument, NULL, 'w' },
+        { "press", required_argument, NULL, 'p' },
         { NULL, 0, NULL, 0 }
     };
 
@@ -168,6 +169,11 @@ ParseArguments(int Count, char **Args)
             case 'w':
             {
                 SendKeySequence(optarg);
+                exit(EXIT_SUCCESS);
+            } break;
+            case 'p':
+            {
+                SendKeyPress(optarg);
                 exit(EXIT_SUCCESS);
             } break;
             case 'e':

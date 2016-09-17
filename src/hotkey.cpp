@@ -1,5 +1,6 @@
 #include "hotkey.h"
 #include "locale.h"
+#include "parse.h"
 #include <string.h>
 #include <time.h>
 #include <mach/mach_time.h>
@@ -313,4 +314,54 @@ void SendKeySequence(const char *Sequence)
     CFRelease(KeyUpEvent);
     CFRelease(KeyDownEvent);
     CFRelease(SequenceRef);
+}
+
+internal CGEventFlags
+CreateCGEventFlagsFromHotkey(hotkey *Hotkey)
+{
+    CGEventFlags Flags = 0;
+
+    if(Hotkey->Flags & Hotkey_Flag_Cmd)
+        Flags |= Event_Mask_Cmd;
+    else if(Hotkey->Flags & Hotkey_Flag_LCmd)
+        Flags |= Event_Mask_LCmd;
+    else if(Hotkey->Flags & Hotkey_Flag_RCmd)
+        Flags |= Event_Mask_RCmd;
+
+    if(Hotkey->Flags & Hotkey_Flag_Shift)
+        Flags |= Event_Mask_Shift;
+    else if(Hotkey->Flags & Hotkey_Flag_LShift)
+        Flags |= Event_Mask_LShift;
+    else if(Hotkey->Flags & Hotkey_Flag_RShift)
+        Flags |= Event_Mask_RShift;
+
+    if(Hotkey->Flags & Hotkey_Flag_Alt)
+        Flags |= Event_Mask_Alt;
+    else if(Hotkey->Flags & Hotkey_Flag_LAlt)
+        Flags |= Event_Mask_LAlt;
+    else if(Hotkey->Flags & Hotkey_Flag_RAlt)
+        Flags |= Event_Mask_RAlt;
+
+    if(Hotkey->Flags & Hotkey_Flag_Control)
+        Flags |= Event_Mask_Control;
+
+    return Flags;
+}
+
+void SendKeyPress(char *KeySym)
+{
+    hotkey Hotkey = {};
+    ParseKeySym(KeySym, &Hotkey);
+    CGEventFlags Flags = CreateCGEventFlagsFromHotkey(&Hotkey);
+
+    CGEventRef KeyDownEvent = CGEventCreateKeyboardEvent(NULL, Hotkey.Key, true);
+    CGEventSetFlags(KeyDownEvent, Flags);
+    CGEventPost(kCGHIDEventTap, KeyDownEvent);
+
+    CGEventRef KeyUpEvent = CGEventCreateKeyboardEvent(NULL, Hotkey.Key, false);
+    CGEventSetFlags(KeyUpEvent, Flags);
+    CGEventPost(kCGHIDEventTap, KeyUpEvent);
+
+    CFRelease(KeyDownEvent);
+    CFRelease(KeyUpEvent);
 }

@@ -4,13 +4,12 @@ See [sample config](https://github.com/koekeishiya/khd/blob/master/examples/khdr
 
 See [#1](https://github.com/koekeishiya/khd/issues/1) for information regarding keycodes.
 
-
 Arguments:
 ```
 -v | --version: Print version number to stdout
     khd -v
 
--c | --config : Specify location of config file
+-c | --config: Specify location of config file
     khd -c ~/.khdrc
 
 -e | --emit: Emit text to an already running instance of Khd

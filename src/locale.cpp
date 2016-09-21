@@ -17,7 +17,7 @@ CFStringFromKeycode(CGKeyCode Keycode)
     {
         UInt32 DeadKeyState = 0;
         UniCharCount MaxStringLength = 255;
-        UniCharCount ActualStringLength = 0;
+        UniCharCount StringLength = 0;
         UniChar UnicodeString[MaxStringLength];
 
         OSStatus Status = UCKeyTranslate(KeyboardLayout, Keycode,
@@ -25,22 +25,22 @@ CFStringFromKeycode(CGKeyCode Keycode)
                                          LMGetKbdType(), 0,
                                          &DeadKeyState,
                                          MaxStringLength,
-                                         &ActualStringLength,
+                                         &StringLength,
                                          UnicodeString);
 
-        if(ActualStringLength == 0 && DeadKeyState)
+        if(StringLength == 0 && DeadKeyState)
         {
             Status = UCKeyTranslate(KeyboardLayout, kVK_Space,
                                     kUCKeyActionDown, 0,
                                     LMGetKbdType(), 0,
                                     &DeadKeyState,
                                     MaxStringLength,
-                                    &ActualStringLength,
+                                    &StringLength,
                                     UnicodeString);
         }
 
-        if(ActualStringLength > 0 && Status == noErr)
-            return CFStringCreateWithCharacters(NULL, UnicodeString, ActualStringLength);
+        if(StringLength > 0 && Status == noErr)
+            return CFStringCreateWithCharacters(NULL, UnicodeString, StringLength);
     }
 
     return NULL;
@@ -48,32 +48,30 @@ CFStringFromKeycode(CGKeyCode Keycode)
 
 bool KeycodeFromChar(char Key, hotkey *Hotkey)
 {
-    local_persist CFMutableDictionaryRef CharToCodeDict = NULL;
+    local_persist CFMutableDictionaryRef CharToKeycode = NULL;
 
-    bool Result = true;
-    UniChar Character = Key;
-    CFStringRef CharStr;
-
-    if(!CharToCodeDict)
+    if(!CharToKeycode)
     {
-        CharToCodeDict = CFDictionaryCreateMutable(kCFAllocatorDefault, 128,
-                                                   &kCFCopyStringDictionaryKeyCallBacks, NULL);
-        if(!CharToCodeDict)
+        CharToKeycode = CFDictionaryCreateMutable(kCFAllocatorDefault, 128,
+                                                  &kCFCopyStringDictionaryKeyCallBacks, NULL);
+        if(!CharToKeycode)
             return false;
 
         for(size_t KeyIndex = 0; KeyIndex < 128; ++KeyIndex)
         {
-            CFStringRef KeyString = CFStringFromKeycode((CGKeyCode)KeyIndex);
-            if(KeyString != NULL)
+            CFStringRef KeyString = CFStringFromKeycode(KeyIndex);
+            if(KeyString)
             {
-                CFDictionaryAddValue(CharToCodeDict, KeyString, (const void *)KeyIndex);
+                CFDictionaryAddValue(CharToKeycode, KeyString, (const void *)KeyIndex);
                 CFRelease(KeyString);
             }
         }
     }
 
-    CharStr = CFStringCreateWithCharacters(kCFAllocatorDefault, &Character, 1);
-    if(!CFDictionaryGetValueIfPresent(CharToCodeDict, CharStr, (const void **)&Hotkey->Key))
+    bool Result = true;
+    UniChar Character = Key;
+    CFStringRef CharStr = CFStringCreateWithCharacters(kCFAllocatorDefault, &Character, 1);
+    if(!CFDictionaryGetValueIfPresent(CharToKeycode, CharStr, (const void **)&Hotkey->Key))
         Result = false;
 
     CFRelease(CharStr);

@@ -13,6 +13,8 @@
 #include <unistd.h>
 
 #define internal static
+#define local_persist static
+
 internal int KhdSockFD;
 internal bool IsRunning;
 internal int Port = 3021;
@@ -55,7 +57,7 @@ HandleConnection(void *)
     while(IsRunning)
     {
         struct sockaddr_in ClientAddr;
-        socklen_t SinSize = sizeof(struct sockaddr);
+        local_persist socklen_t SinSize = sizeof(struct sockaddr);
 
         int SockFD = accept(KhdSockFD, (struct sockaddr*)&ClientAddr, &SinSize);
         if(SockFD != -1)

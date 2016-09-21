@@ -46,22 +46,12 @@ KeyCallback(CGEventTapProxy Proxy, CGEventType Type, CGEventRef Event, void *Con
         } break;
         case kCGEventKeyDown:
         {
-            hotkey *Hotkey = (hotkey *) malloc(sizeof(hotkey));
-            if(Hotkey)
+            hotkey *Hotkey = NULL;
+            if(HotkeyForCGEvent(Event, &Hotkey))
             {
-                if(HotkeyForCGEvent(Event, Hotkey))
-                {
-                    bool Passthrough = HasFlags(Hotkey, Hotkey_Flag_Passthrough);
-                    Execute(Hotkey->Command);
-                    free(Hotkey);
-                    if(!Passthrough)
-                        return NULL;
-                }
-                else
-                {
-                    // printf("key pressed\n");
-                    free(Hotkey);
-                }
+                Execute(Hotkey->Command);
+                if(!HasFlags(Hotkey, Hotkey_Flag_Passthrough))
+                    return NULL;
             }
         } break;
     }

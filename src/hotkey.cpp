@@ -253,7 +253,7 @@ CreateHotkeyFromCGEvent(CGEventRef Event)
     if((Flags & Event_Mask_Control) == Event_Mask_Control)
         AddFlags(&Eventkey, Hotkey_Flag_Control);
 
-    Eventkey.Key = (CGKeyCode)CGEventGetIntegerValueField(Event, kCGKeyboardEventKeycode);
+    Eventkey.Key = CGEventGetIntegerValueField(Event, kCGKeyboardEventKeycode);
     return Eventkey;
 }
 

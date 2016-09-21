@@ -258,7 +258,7 @@ CreateHotkeyFromCGEvent(CGEventRef Event)
 }
 
 internal bool
-HotkeyExists(uint32_t Flags, CGKeyCode Keycode, hotkey *Result, const char *Mode)
+HotkeyExists(uint32_t Flags, CGKeyCode Keycode, hotkey **Result, const char *Mode)
 {
     hotkey TempHotkey = {};
     TempHotkey.Flags = Flags;
@@ -272,7 +272,7 @@ HotkeyExists(uint32_t Flags, CGKeyCode Keycode, hotkey *Result, const char *Mode
         {
             if(HotkeysAreEqual(Hotkey, &TempHotkey))
             {
-                *Result = *Hotkey;
+                *Result = Hotkey;
                 return true;
             }
 
@@ -283,7 +283,7 @@ HotkeyExists(uint32_t Flags, CGKeyCode Keycode, hotkey *Result, const char *Mode
     return false;
 }
 
-bool HotkeyForCGEvent(CGEventRef Event, hotkey *Hotkey)
+bool HotkeyForCGEvent(CGEventRef Event, hotkey **Hotkey)
 {
     hotkey Eventkey = CreateHotkeyFromCGEvent(Event);
     return HotkeyExists(Eventkey.Flags, Eventkey.Key, Hotkey, ActiveBindingMode->Name);

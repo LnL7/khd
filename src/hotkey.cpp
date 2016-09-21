@@ -321,28 +321,28 @@ CreateCGEventFlagsFromHotkey(hotkey *Hotkey)
 {
     CGEventFlags Flags = 0;
 
-    if(Hotkey->Flags & Hotkey_Flag_Cmd)
+    if(HasFlags(Hotkey, Hotkey_Flag_Cmd))
         Flags |= Event_Mask_Cmd;
-    else if(Hotkey->Flags & Hotkey_Flag_LCmd)
+    else if(HasFlags(Hotkey, Hotkey_Flag_LCmd))
         Flags |= Event_Mask_LCmd;
-    else if(Hotkey->Flags & Hotkey_Flag_RCmd)
+    else if(HasFlags(Hotkey, Hotkey_Flag_RCmd))
         Flags |= Event_Mask_RCmd;
 
-    if(Hotkey->Flags & Hotkey_Flag_Shift)
+    if(HasFlags(Hotkey, Hotkey_Flag_Shift))
         Flags |= Event_Mask_Shift;
-    else if(Hotkey->Flags & Hotkey_Flag_LShift)
+    else if(HasFlags(Hotkey, Hotkey_Flag_LShift))
         Flags |= Event_Mask_LShift;
-    else if(Hotkey->Flags & Hotkey_Flag_RShift)
+    else if(HasFlags(Hotkey, Hotkey_Flag_RShift))
         Flags |= Event_Mask_RShift;
 
-    if(Hotkey->Flags & Hotkey_Flag_Alt)
+    if(HasFlags(Hotkey, Hotkey_Flag_Alt))
         Flags |= Event_Mask_Alt;
-    else if(Hotkey->Flags & Hotkey_Flag_LAlt)
+    else if(HasFlags(Hotkey, Hotkey_Flag_LAlt))
         Flags |= Event_Mask_LAlt;
-    else if(Hotkey->Flags & Hotkey_Flag_RAlt)
+    else if(HasFlags(Hotkey, Hotkey_Flag_RAlt))
         Flags |= Event_Mask_RAlt;
 
-    if(Hotkey->Flags & Hotkey_Flag_Control)
+    if(HasFlags(Hotkey, Hotkey_Flag_Control))
         Flags |= Event_Mask_Control;
 
     return Flags;

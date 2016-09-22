@@ -160,8 +160,8 @@ ReloadConfig()
             DefaultBindingMode.Restore = NULL;
         }
 
-        ActiveBindingMode = &DefaultBindingMode;
         ParseConfig(Contents);
+        ActivateMode("default");
     }
 }
 

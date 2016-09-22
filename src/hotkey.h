@@ -2,7 +2,6 @@
 #define KHD_HOTKEY_H
 
 #include <stdint.h>
-#include <time.h>
 #include <Carbon/Carbon.h>
 
 enum osx_event_mask
@@ -55,7 +54,7 @@ struct mode
     bool Prefix;
     double Timeout;
     char *Restore;
-    timespec Time;
+    long long Time;
 
     hotkey *Hotkey;
     mode *Next;

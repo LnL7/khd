@@ -2,7 +2,6 @@
 #include "locale.h"
 #include "parse.h"
 #include <string.h>
-#include <time.h>
 #include <mach/mach_time.h>
 
 #define internal static
@@ -14,7 +13,7 @@ extern mode *ActiveBindingMode;
 extern uint32_t Compatibility;
 
 internal inline void
-ClockGetTime(timespec *Time)
+ClockGetTime(long long *Time)
 {
     local_persist mach_timebase_info_data_t Timebase;
     if(Timebase.denom == 0)
@@ -23,13 +22,13 @@ ClockGetTime(timespec *Time)
     }
 
     uint64_t Temp = mach_absolute_time();
-    Time->tv_nsec = (Temp * Timebase.numer) / Timebase.denom;
+    *Time = (Temp * Timebase.numer) / Timebase.denom;
 }
 
 internal inline double
-GetTimeDiff(timespec *Time)
+GetTimeDiff(long long Time)
 {
-    return (Time->tv_nsec - ActiveBindingMode->Time.tv_nsec) * CLOCK_PRECISION;
+    return (Time - ActiveBindingMode->Time) * CLOCK_PRECISION;
 }
 
 internal inline void
@@ -41,10 +40,10 @@ UpdatePrefixTimer()
     ^{
         if(ActiveBindingMode->Prefix)
         {
-            timespec Time;
+            long long Time;
             ClockGetTime(&Time);
 
-            if(GetTimeDiff(&Time) >= ActiveBindingMode->Timeout)
+            if(GetTimeDiff(Time) >= ActiveBindingMode->Timeout)
             {
                 if(ActiveBindingMode->Restore)
                     ActivateMode(ActiveBindingMode->Restore);

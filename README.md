@@ -1,4 +1,4 @@
-**Khd**, Simple event-tap hotkey daemon for OSX.
+**Khd** is a simple modal hotkey-daemon for OSX, using [Quartz Event Services](https://developer.apple.com/reference/coregraphics/1658572-quartz_event_services?language=objc).
 
 See [sample config](https://github.com/koekeishiya/khd/blob/master/examples/khdrc) for syntax information.
 

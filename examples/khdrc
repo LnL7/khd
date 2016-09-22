@@ -1,8 +1,5 @@
 # sample config for khd
 
-# NOTE(koekeishiya): when khd is launched with the '-e' (--emit) flag,
-# the specified message is sent to a running instance of khd through a socket.
-
 # NOTE(koekeishiya): A bind is written in the form:
 #                   <keysym> [->] : <command>
 #                   where
@@ -22,11 +19,6 @@
 #
 #                                    An EOL character signifies the end of the bind.
 
-# NOTE(koekeishiya): specify arrow operator '->' to mark bind as passthrough
-# shift - 0x27 -> : echo "multiline command with passthrough" |\
-#                   alerter -title Test passthrough -timeout 2;\
-#                   echo "end of command" | alerter -title End -timeout 2
-
 # NOTE(koekeishiya): Crazy syntax test, parses and executes properly
 # cmd   +
 #   alt   +   ctrl
@@ -35,19 +27,12 @@
 #                   alerter -title Test passthrough -timeout 2;\
 #                   echo "end of command" | alerter -title End -timeout 2
 
-# NOTE(koekeishiya): Enable prefix mode
-# khd mode my_mode prefix on
-# khd mode my_mode timeout 0.75
-# khd mode my_mode restore default
-
 # TODO(koekeishiya): possibly allow combined syntax such as
-# switcher - [h,j,k,l] : kwmc window -f [west, south, north, east]
 # [switcher,ytd] + ctrl - f : khd -e "mode activate default"
 
 
 
-# enable kwm compatibility mode. changes color of focused
-# border when entering a given mode, if a color is specified.
+# enable kwm compatibility mode
 khd kwm on
 
 

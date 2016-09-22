@@ -17,7 +17,11 @@ internal inline void
 ClockGetTime(timespec *Time)
 {
     local_persist mach_timebase_info_data_t Timebase;
-    mach_timebase_info(&Timebase);
+    if(Timebase.denom == 0)
+    {
+        mach_timebase_info(&Timebase);
+    }
+
     uint64_t Temp = mach_absolute_time();
     Time->tv_nsec = (Temp * Timebase.numer) / Timebase.denom;
 }

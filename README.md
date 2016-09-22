@@ -21,3 +21,33 @@ Arguments:
 -p | --press: Simulate a keypress (parsed just like <keysym>)
     khd -p "cmd - right"
 ```
+
+Interactive commands:
+```
+activate a mode
+    khd -e "mode activate my_mode"
+
+reload config
+    khd -e "reload"
+```
+
+Customize mode:
+```
+enable prefix mode
+    khd mode my_mode prefix on
+
+specify prefix timeout
+    khd mode my_mode timeout 0.75
+
+activate mode on timeout (defaults to 'default')
+    khd mode my_mode restore some_other_mode
+
+specify color for this mode (kwm compatibility mode)
+    khd mode my_mode color 0xAARRGGBB
+```
+
+Compatibility with Kwm:
+```
+set color of focused border to color of active mode
+    khd kwm on
+```

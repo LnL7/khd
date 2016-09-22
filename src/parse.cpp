@@ -11,6 +11,7 @@
 #define internal static
 extern mode DefaultBindingMode;
 extern mode *ActiveBindingMode;
+extern char *ConfigFile;
 extern uint32_t Compatibility;
 
 internal void
@@ -89,6 +90,78 @@ AppendHotkey(hotkey *Hotkey)
     else
     {
         BindingMode->Hotkey = Hotkey;
+    }
+}
+
+internal inline void
+DestroyHotkey(hotkey *Hotkey)
+{
+    if(Hotkey->Next)
+        DestroyHotkey(Hotkey->Next);
+
+    if(Hotkey->Mode)
+        free(Hotkey->Mode);
+
+    if(Hotkey->Command)
+        free(Hotkey->Command);
+
+    free(Hotkey);
+}
+
+internal inline void
+DestroyBindingMode(mode *BindingMode)
+{
+    if(BindingMode->Next)
+        DestroyBindingMode(BindingMode->Next);
+
+    if(BindingMode->Hotkey)
+        DestroyHotkey(BindingMode->Hotkey);
+
+    if(BindingMode->Name)
+        free(BindingMode->Name);
+
+    if(BindingMode->Color)
+        free(BindingMode->Color);
+
+    if(BindingMode->Restore)
+        free(BindingMode->Restore);
+
+    free(BindingMode);
+}
+
+internal void
+ReloadConfig()
+{
+    char *Contents = ReadFile(ConfigFile);
+    if(Contents)
+    {
+        printf("Khd: Reloading config '%s'\n", ConfigFile);
+        if(DefaultBindingMode.Next)
+        {
+            DestroyBindingMode(DefaultBindingMode.Next);
+            DefaultBindingMode.Next = NULL;
+        }
+
+        if(DefaultBindingMode.Hotkey)
+        {
+            DestroyHotkey(DefaultBindingMode.Hotkey);
+            DefaultBindingMode.Hotkey = NULL;
+        }
+
+        if(DefaultBindingMode.Color)
+        {
+            free(DefaultBindingMode.Color);
+            DefaultBindingMode.Color = NULL;
+        }
+
+        if(DefaultBindingMode.Restore)
+        {
+            free(DefaultBindingMode.Restore);
+            DefaultBindingMode.Restore = NULL;
+        }
+
+        ActiveBindingMode = &DefaultBindingMode;
+        ParseConfig(Contents);
     }
 }
 
@@ -365,7 +438,7 @@ ParseKhd(tokenizer *Tokenizer)
         {
             if(TokenEquals(Token, "reload"))
             {
-                // TODO(koekeishiya): Reload config file.
+                ReloadConfig();
             }
             else if(TokenEquals(Token, "kwm"))
             {
@@ -402,8 +475,6 @@ void ParseKeySym(char *KeySym, hotkey *Hotkey)
     }
 }
 
-// TODO(koekeishiya): We want to clear existing config information before reloading.
-// The active binding mode should also be pointing to the 'default' mode.
 void ParseConfig(char *Contents)
 {
     tokenizer Tokenizer = { Contents };
@@ -450,4 +521,25 @@ void ParseConfig(char *Contents)
     }
 
     free(Contents);
+}
+
+char *ReadFile(const char *File)
+{
+    char *Contents = NULL;
+    FILE *Descriptor = fopen(File, "r");
+
+    if(Descriptor)
+    {
+        fseek(Descriptor, 0, SEEK_END);
+        unsigned int Length = ftell(Descriptor);
+        fseek(Descriptor, 0, SEEK_SET);
+
+        Contents = (char *) malloc(Length + 1);
+        fread(Contents, Length, 1, Descriptor);
+        Contents[Length] = '\0';
+
+        fclose(Descriptor);
+    }
+
+    return Contents;
 }

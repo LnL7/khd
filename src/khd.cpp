@@ -16,11 +16,11 @@ extern "C" bool CGSIsSecureEventInputSet();
 
 internal CFMachPortRef KhdEventTap;
 internal const char *KhdVersion = "0.0.3";
-internal char *ConfigFile;
 
 mode DefaultBindingMode = {};
 mode *ActiveBindingMode = NULL;
 uint32_t Compatibility = 0;
+char *ConfigFile;
 
 internal inline void
 Error(const char *Format, ...)
@@ -76,28 +76,6 @@ ConfigureRunLoop()
     CFRunLoopAddSource(CFRunLoopGetMain(),
                        CFMachPortCreateRunLoopSource(kCFAllocatorDefault, KhdEventTap, 0),
                        kCFRunLoopCommonModes);
-}
-
-internal inline char *
-ReadFile(const char *File)
-{
-    char *Contents = NULL;
-    FILE *Descriptor = fopen(File, "r");
-
-    if(Descriptor)
-    {
-        fseek(Descriptor, 0, SEEK_END);
-        unsigned int Length = ftell(Descriptor);
-        fseek(Descriptor, 0, SEEK_SET);
-
-        Contents = (char *) malloc(Length + 1);
-        fread(Contents, Length, 1, Descriptor);
-        Contents[Length] = '\0';
-
-        fclose(Descriptor);
-    }
-
-    return Contents;
 }
 
 internal inline void

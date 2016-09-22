@@ -6,5 +6,6 @@ void ParseKhd(char *Contents);
 
 struct hotkey;
 void ParseKeySym(char *KeySym, hotkey *Hotkey);
+char *ReadFile(const char *File);
 
 #endif

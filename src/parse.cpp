@@ -74,7 +74,9 @@ AppendHotkey(hotkey *Hotkey)
 {
     mode *BindingMode = GetBindingMode(Hotkey->Mode);
     if(!BindingMode)
+    {
         BindingMode = CreateBindingMode(Hotkey->Mode);
+    }
 
     if(BindingMode->Hotkey)
     {
@@ -186,14 +188,22 @@ ParseKeyLiteral(tokenizer *Tokenizer, token *Token, hotkey *Hotkey, bool ExpectC
     bool Result = false;
 
     if(Token->Length > 1)
+    {
         Result = LayoutIndependentKeycode(Temp, Hotkey);
+    }
     else
+    {
         Result = KeycodeFromChar(Temp[0], Hotkey);
+    }
 
     if(Result && ExpectCommand)
+    {
         ParseCommand(Tokenizer, Hotkey);
+    }
     else if(!Result)
+    {
         Error("Invalid format for key literal: %.*s\n", Token->Length, Token->Text);
+    }
 
     free(Temp);
 }
@@ -251,9 +261,13 @@ ParseKhdModeProperties(token *TokenMode, tokenizer *Tokenizer)
     {
         token Token = GetToken(Tokenizer);
         if(TokenEquals(Token, "on"))
+        {
             BindingMode->Prefix = true;
+        }
         else if(TokenEquals(Token, "off"))
+        {
             BindingMode->Prefix = false;
+        }
 
         printf("Prefix State: %d\n", BindingMode->Prefix);
     }
@@ -322,9 +336,13 @@ ParseKhdMode(tokenizer *Tokenizer)
         case Token_Identifier:
         {
             if(TokenEquals(Token, "activate"))
+            {
                 ParseKhdModeActivate(Tokenizer);
+            }
             else
+            {
                 ParseKhdModeProperties(&Token, Tokenizer);
+            }
         } break;
         default:
         {
@@ -406,14 +424,12 @@ void ParseConfig(char *Contents)
             case Token_Hex:
             {
                 printf("Token_Hex: %.*s\n", Token.Length, Token.Text);
-                hotkey *Hotkey = AllocHotkey();
-                ParseKeyHexadecimal(&Tokenizer, &Token, Hotkey, true);
+                ParseKeyHexadecimal(&Tokenizer, &Token, AllocHotkey(), true);
             } break;
             case Token_Literal:
             {
                 printf("Token_Literal: %.*s\n", Token.Length, Token.Text);
-                hotkey *Hotkey = AllocHotkey();
-                ParseKeyLiteral(&Tokenizer, &Token, Hotkey, true);
+                ParseKeyLiteral(&Tokenizer, &Token, AllocHotkey(), true);
             } break;
             case Token_Identifier:
             {
@@ -423,8 +439,7 @@ void ParseConfig(char *Contents)
                 }
                 else
                 {
-                    hotkey *Hotkey = AllocHotkey();
-                    ParseKeySym(&Tokenizer, &Token, Hotkey, true);
+                    ParseKeySym(&Tokenizer, &Token, AllocHotkey(), true);
                 }
             } break;
             default:

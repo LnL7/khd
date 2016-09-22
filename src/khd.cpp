@@ -71,9 +71,7 @@ ConfigureRunLoop()
                                    NULL);
 
     if(!KhdEventTap || !CGEventTapIsEnabled(KhdEventTap))
-    {
         Error("Khd: Could not create event-tap, try running as root!\n");
-    }
 
     CFRunLoopAddSource(CFRunLoopGetMain(),
                        CFMachPortCreateRunLoopSource(kCFAllocatorDefault, KhdEventTap, 0),
@@ -151,20 +149,15 @@ ParseArguments(int Count, char **Args)
                 printf("Khd Version %s\n", KhdVersion);
                 return true;
             } break;
-            case 'c':
-            {
-                ConfigFile = strdup(optarg);
-                printf("Khd: Using config '%s'\n", ConfigFile);
-            } break;
             case 'w':
             {
                 SendKeySequence(optarg);
-                exit(EXIT_SUCCESS);
+                return true;
             } break;
             case 'p':
             {
                 SendKeyPress(optarg);
-                exit(EXIT_SUCCESS);
+                return true;
             } break;
             case 'e':
             {
@@ -173,12 +166,17 @@ ParseArguments(int Count, char **Args)
                 {
                     WriteToSocket(optarg, SockFD);
                     CloseSocket(SockFD);
-                    exit(EXIT_SUCCESS);
+                    return true;
                 }
                 else
                 {
                     Error("Could not connect to daemon! Terminating.\n");
                 }
+            } break;
+            case 'c':
+            {
+                ConfigFile = strdup(optarg);
+                printf("Khd: Using config '%s'\n", ConfigFile);
             } break;
         }
     }

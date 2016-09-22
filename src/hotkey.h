@@ -20,6 +20,8 @@ enum osx_event_mask
     Event_Mask_RCmd = 0x00000010,
 
     Event_Mask_Control = 0x00040000,
+    Event_Mask_LControl = 0x00000001,
+    Event_Mask_RControl = 0x00002000,
 };
 
 enum hotkey_flag
@@ -37,8 +39,10 @@ enum hotkey_flag
     Hotkey_Flag_RCmd = (1 << 8),
 
     Hotkey_Flag_Control = (1 << 9),
+    Hotkey_Flag_LControl = (1 << 10),
+    Hotkey_Flag_RControl = (1 << 11),
 
-    Hotkey_Flag_Passthrough = (1 << 10),
+    Hotkey_Flag_Passthrough = (1 << 12),
 };
 
 struct hotkey;

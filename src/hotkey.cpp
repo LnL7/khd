@@ -196,7 +196,18 @@ CompareAltKey(hotkey *A, hotkey *B)
 internal inline bool
 CompareControlKey(hotkey *A, hotkey *B)
 {
-    return (HasFlags(A, Hotkey_Flag_Control) == HasFlags(B, Hotkey_Flag_Control));
+    if(HasFlags(A, Hotkey_Flag_Control))
+    {
+        return (HasFlags(B, Hotkey_Flag_LControl) ||
+                HasFlags(B, Hotkey_Flag_RControl) ||
+                HasFlags(B, Hotkey_Flag_Control));
+    }
+    else
+    {
+        return ((HasFlags(A, Hotkey_Flag_LControl) == HasFlags(B, Hotkey_Flag_LControl)) &&
+                (HasFlags(A, Hotkey_Flag_RControl) == HasFlags(B, Hotkey_Flag_RControl)) &&
+                (HasFlags(A, Hotkey_Flag_Control) == HasFlags(B, Hotkey_Flag_Control)));
+    }
 }
 
 internal inline bool
@@ -251,7 +262,14 @@ CreateHotkeyFromCGEvent(CGEventRef Event)
     }
 
     if((Flags & Event_Mask_Control) == Event_Mask_Control)
-        AddFlags(&Eventkey, Hotkey_Flag_Control);
+    {
+        if((Flags & Event_Mask_LControl) == Event_Mask_LControl)
+            AddFlags(&Eventkey, Hotkey_Flag_LControl);
+        else if((Flags & Event_Mask_RControl) == Event_Mask_RControl)
+            AddFlags(&Eventkey, Hotkey_Flag_RControl);
+        else
+            AddFlags(&Eventkey, Hotkey_Flag_Control);
+    }
 
     Eventkey.Key = CGEventGetIntegerValueField(Event, kCGKeyboardEventKeycode);
     return Eventkey;
@@ -324,26 +342,30 @@ CreateCGEventFlagsFromHotkey(hotkey *Hotkey)
     if(HasFlags(Hotkey, Hotkey_Flag_Cmd))
         Flags |= Event_Mask_Cmd;
     else if(HasFlags(Hotkey, Hotkey_Flag_LCmd))
-        Flags |= Event_Mask_LCmd;
+        Flags |= Event_Mask_LCmd | Event_Mask_Cmd;
     else if(HasFlags(Hotkey, Hotkey_Flag_RCmd))
-        Flags |= Event_Mask_RCmd;
+        Flags |= Event_Mask_RCmd | Event_Mask_Cmd;
 
     if(HasFlags(Hotkey, Hotkey_Flag_Shift))
         Flags |= Event_Mask_Shift;
     else if(HasFlags(Hotkey, Hotkey_Flag_LShift))
-        Flags |= Event_Mask_LShift;
+        Flags |= Event_Mask_LShift | Event_Mask_Shift;
     else if(HasFlags(Hotkey, Hotkey_Flag_RShift))
-        Flags |= Event_Mask_RShift;
+        Flags |= Event_Mask_RShift | Event_Mask_Shift;
 
     if(HasFlags(Hotkey, Hotkey_Flag_Alt))
         Flags |= Event_Mask_Alt;
     else if(HasFlags(Hotkey, Hotkey_Flag_LAlt))
-        Flags |= Event_Mask_LAlt;
+        Flags |= Event_Mask_LAlt | Event_Mask_Alt;
     else if(HasFlags(Hotkey, Hotkey_Flag_RAlt))
-        Flags |= Event_Mask_RAlt;
+        Flags |= Event_Mask_RAlt | Event_Mask_Alt;
 
     if(HasFlags(Hotkey, Hotkey_Flag_Control))
         Flags |= Event_Mask_Control;
+    else if(HasFlags(Hotkey, Hotkey_Flag_LControl))
+        Flags |= Event_Mask_LControl | Event_Mask_Control;
+    else if(HasFlags(Hotkey, Hotkey_Flag_RControl))
+        Flags |= Event_Mask_RControl | Event_Mask_Control;
 
     return Flags;
 }

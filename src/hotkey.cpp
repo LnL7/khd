@@ -330,6 +330,8 @@ void SendKeySequence(const char *Sequence)
         CGEventSetFlags(KeyUpEvent, 0);
         CGEventKeyboardSetUnicodeString(KeyUpEvent, 1, &OutputBuffer);
         CGEventPost(kCGHIDEventTap, KeyUpEvent);
+
+        usleep(100);
     }
 
     CFRelease(KeyUpEvent);

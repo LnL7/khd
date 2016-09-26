@@ -51,6 +51,23 @@ token GetToken(tokenizer *Tokenizer)
         case '{': { Token.Type = Token_OpenBrace; } break;
         case '}': { Token.Type = Token_CloseBrace; } break;
         case '+': { Token.Type = Token_Plus; } break;
+        case '!': { Token.Type = Token_Negate; } break;
+        case '[':
+        {
+            Token.Text = Tokenizer->At;
+
+            while((Tokenizer->At[0]) &&
+                  (Tokenizer->At[0] != ']'))
+            {
+                ++Tokenizer->At;
+            }
+
+            Token.Type = Token_List;
+            Token.Length = Tokenizer->At - Token.Text;
+
+            if(Tokenizer->At[0] == ']')
+                ++Tokenizer->At;
+        } break;
         case ':':
         {
             EatAllWhiteSpace(Tokenizer);

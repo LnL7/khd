@@ -60,6 +60,39 @@ AllocAndCopyString(char *Text, int Length)
     return Result;
 }
 
+internal char **
+AllocAndCopyList(char *Text, int Length)
+{
+    int Count = 1;
+    for(int Index = 0; Index < Length; ++Index)
+    {
+        if(Text[Index] == ',')
+            ++Count;
+    }
+
+    char *Temp = AllocAndCopyString(Text, Length);
+    char **Result = (char **) malloc(Count * sizeof(char *) + 1);
+    Result[Count] = NULL;
+
+    char *Token = strtok(Temp, ",");
+    while(Token)
+    {
+        while(isspace(*Token))
+            ++Token;
+
+        char *End = Token + strlen(Token) - 1;
+        while(End > Token && isspace(*End))
+            --End;
+
+        *(End + 1) = '\0';
+        Result[--Count] = strdup(Token);
+        Token = strtok(NULL, ",");
+    }
+
+    free(Temp);
+    return Result;
+}
+
 internal inline hotkey *
 AllocHotkey()
 {
@@ -104,6 +137,17 @@ DestroyHotkey(hotkey *Hotkey)
 
     if(Hotkey->Command)
         free(Hotkey->Command);
+
+    if(Hotkey->App)
+    {
+        char **App = Hotkey->App;
+        while(*App)
+        {
+            free(*App++);
+        }
+
+        free(Hotkey->App);
+    }
 
     free(Hotkey);
 }
@@ -182,6 +226,28 @@ ParseCommand(tokenizer *Tokenizer, hotkey *Hotkey)
         {
             AddFlags(Hotkey, Hotkey_Flag_Passthrough);
             printf("Token_Passthrough: %.*s\n", Command.Length, Command.Text);
+            ParseCommand(Tokenizer, Hotkey);
+        } break;
+        case Token_Negate:
+        {
+            Hotkey->Type = Hotkey_Exclude;
+            printf("Token_Negate: %.*s\n", Command.Length, Command.Text);
+            ParseCommand(Tokenizer, Hotkey);
+        } break;
+        case Token_List:
+        {
+            printf("Token_List: [\n");
+            Hotkey->App = AllocAndCopyList(Command.Text, Command.Length);
+            if(Hotkey->Type == Hotkey_Default)
+                Hotkey->Type = Hotkey_Include;
+
+            char **List = Hotkey->App;
+            while(*List)
+            {
+                printf("    %s\n", *List++);
+            }
+            printf("]\n");
+
             ParseCommand(Tokenizer, Hotkey);
         } break;
         case Token_Command:

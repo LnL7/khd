@@ -6,6 +6,8 @@ enum token_type
     Token_Identifier,
     Token_Command,
     Token_Literal,
+    Token_List,
+    Token_Negate,
     Token_Passthrough,
 
     Token_Plus,

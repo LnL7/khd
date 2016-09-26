@@ -44,6 +44,13 @@ enum hotkey_flag
     Hotkey_Flag_Passthrough = (1 << 12),
 };
 
+enum hotkey_type
+{
+    Hotkey_Default,
+    Hotkey_Include,
+    Hotkey_Exclude,
+};
+
 struct hotkey;
 
 struct mode
@@ -64,9 +71,11 @@ struct hotkey
 {
     char *Mode;
 
+    hotkey_type Type;
     uint32_t Flags;
     CGKeyCode Key;
     char *Command;
+    char **App;
 
     hotkey *Next;
 };

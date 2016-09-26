@@ -1,10 +1,23 @@
 # sample config for khd
 
 # NOTE(koekeishiya): A bind is written in the form:
-#                   <keysym> [->] : <command>
+#                   <keysym> [!] [<app list>] [->] : <command>
 #                   where
 #                       <keysym>   = mode + mod + ... + mod - literal
 #                       <keysym>   = mode + mod + ... + mod - keycode (must have 0x prefix)
+#
+#                       [<app,
+#                         app,     = optional list '[app1, ..., appN]' of applications
+#                         app>]      that this bind will be activated for. if the
+#                                    focused application is not contained in this list,
+#                                    the associated command will not be triggered.
+#
+#                                    note: the keypress will still be consumed.
+#
+#                       [!]        = optional operator '!' negates the behaviour when a
+#                                    list of applications is given. this marks the bind
+#                                    as 'Hotkey_Exclude', causing the bind to not work
+#                                    when the focused application is in the given list.
 #
 #                       [->]       = optional operator '->' that marks this bind as
 #                                    'passthrough'. this causes the key to be passed
@@ -19,13 +32,26 @@
 #
 #                                    An EOL character signifies the end of the bind.
 
-# NOTE(koekeishiya): Crazy syntax test, parses and executes properly
-# cmd   +
-#   alt   +   ctrl
-#      -  m  ->   :
-#                   echo "inconsistent whitspace and multiline command with passthrough" |\
-#                   alerter -title Test passthrough -timeout 2;\
-#                   echo "end of command" | alerter -title End -timeout 2
+# NOTE(koekeishiya) Example of passthrough
+# cmd - m -> : echo "alert and minimize window" | alerter -title Test passthrough -timeout 2
+
+# NOTE(koekeishiya) Example of app list
+# alt - e [
+#           iTerm2,
+#           Terminal,
+#           HyperTerm
+#         ]
+#         : echo "so this is how deep the rabbit hole goes.." |\
+#           alerter -title Test passthrough -timeout 2
+
+# NOTE(koekeishiya) Example of negated app list
+# alt - e [
+#           iTerm2,
+#           Terminal,
+#           HyperTerm
+#         ] !
+#         : echo "blue pill, i choose you!" |\
+#           alerter -title Test passthrough -timeout 2
 
 # TODO(koekeishiya): possibly allow combined syntax such as
 # [switcher,ytd] + ctrl - f : khd -e "mode activate default"

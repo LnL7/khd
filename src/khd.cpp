@@ -17,7 +17,7 @@ extern "C" bool CGSIsSecureEventInputSet();
 #define IsSecureKeyboardEntryEnabled CGSIsSecureEventInputSet
 
 internal CFMachPortRef KhdEventTap;
-internal const char *KhdVersion = "0.0.6";
+internal const char *KhdVersion = "1.0.0";
 
 mode DefaultBindingMode = {};
 mode *ActiveBindingMode = NULL;
@@ -201,6 +201,25 @@ ParseArguments(int Count, char **Args)
     return false;
 }
 
+internal inline bool
+CheckPrivileges()
+{
+    bool Result = false;
+    const void *Keys[] = { kAXTrustedCheckOptionPrompt };
+    const void *Values[] = { kCFBooleanTrue };
+
+    CFDictionaryRef Options;
+    Options = CFDictionaryCreate(kCFAllocatorDefault,
+                                 Keys, Values, sizeof(Keys) / sizeof(*Keys),
+                                 &kCFCopyStringDictionaryKeyCallBacks,
+                                 &kCFTypeDictionaryValueCallBacks);
+
+    Result = AXIsProcessTrustedWithOptions(Options);
+    CFRelease(Options);
+
+    return Result;
+}
+
 int main(int Count, char **Args)
 {
     if(ParseArguments(Count, Args))
@@ -208,6 +227,9 @@ int main(int Count, char **Args)
 
     if(IsSecureKeyboardEntryEnabled())
         Error("Khd: Secure keyboard entry is enabled! Terminating.\n");
+
+    if(getuid() != 0 && !CheckPrivileges())
+        Error("Khd: Must be run with accessibility access, or as root.\n");
 
     if(!StartDaemon())
         Error("Khd: Could not start daemon! Terminating.\n");

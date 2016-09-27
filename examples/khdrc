@@ -10,9 +10,8 @@
 #                         app,     = optional list '[app1, ..., appN]' of applications
 #                         app>]      that this bind will be activated for. if the
 #                                    focused application is not contained in this list,
-#                                    the associated command will not be triggered.
-#
-#                                    note: the keypress will still be consumed.
+#                                    the associated command will not be triggered, and
+#                                    the keypress will be passed through as normal.
 #
 #                       [!]        = optional operator '!' negates the behaviour when a
 #                                    list of applications is given. this marks the bind

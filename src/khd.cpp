@@ -21,6 +21,7 @@ mode DefaultBindingMode = {};
 mode *ActiveBindingMode = NULL;
 uint32_t Compatibility = 0;
 char *ConfigFile;
+char *FocusedApp;
 
 internal inline void
 Error(const char *Format, ...)
@@ -49,7 +50,7 @@ KeyCallback(CGEventTapProxy Proxy, CGEventType Type, CGEventRef Event, void *Con
             hotkey *Hotkey = NULL;
             if(HotkeyForCGEvent(Event, &Hotkey))
             {
-                Execute(Hotkey->Command);
+                ExecuteHotkey(Hotkey);
                 if(!HasFlags(Hotkey, Hotkey_Flag_Passthrough))
                     return NULL;
             }

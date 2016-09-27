@@ -11,6 +11,7 @@
 extern mode DefaultBindingMode;
 extern mode *ActiveBindingMode;
 extern uint32_t Compatibility;
+extern char *FocusedApp;
 
 internal inline void
 ClockGetTime(long long *Time)
@@ -59,7 +60,8 @@ UpdatePrefixTimer()
 internal const char *Shell = "/bin/bash";
 internal const char *ShellArgs = "-c";
 
-void Execute(char *Command)
+internal void
+Execute(char *Command)
 {
     int ChildPID = fork();
     if(ChildPID == 0)
@@ -87,6 +89,53 @@ ExecuteKwmBorderCommand()
         exit(StatusCode);
     }
 }
+
+internal inline bool
+VerifyHotkeyType(hotkey *Hotkey)
+{
+    if(!Hotkey->App)
+        return true;
+
+    if(Hotkey->Type == Hotkey_Include)
+    {
+        char **App = Hotkey->App;
+        while(*App)
+        {
+            if(FocusedApp &&
+               StringsAreEqual(*App, FocusedApp))
+                return true;
+
+            ++App;
+        }
+
+        return false;
+    }
+    else if(Hotkey->Type == Hotkey_Exclude)
+    {
+        char **App = Hotkey->App;
+        while(*App)
+        {
+            if(FocusedApp &&
+               StringsAreEqual(*App, FocusedApp))
+                return false;
+
+            ++App;
+        }
+
+        return true;
+    }
+
+    return true;
+}
+
+void ExecuteHotkey(hotkey *Hotkey)
+{
+    if(VerifyHotkeyType(Hotkey))
+    {
+        Execute(Hotkey->Command);
+    }
+}
+
 
 void ActivateMode(const char *Mode)
 {

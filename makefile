@@ -1,8 +1,9 @@
-FRAMEWORKS     = -framework Carbon
+FRAMEWORKS     = -framework Carbon -framework Cocoa
 BUILD_PATH     = ./bin
 BUILD_FLAGS    = -Wall -g
 KHD_SRC        = ./src/khd.cpp ./src/hotkey.cpp ./src/parse.cpp\
-                 ./src/tokenize.cpp ./src/locale.cpp ./src/daemon.cpp
+                 ./src/tokenize.cpp ./src/locale.cpp ./src/daemon.cpp\
+                 ./src/sharedworkspace.mm
 BINS           = $(BUILD_PATH)/khd
 
 all: $(BINS)

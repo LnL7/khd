@@ -4,6 +4,7 @@
 #include <getopt.h>
 #include <signal.h>
 #include <string.h>
+#include <pthread.h>
 #include <Carbon/Carbon.h>
 
 #include "daemon.h"
@@ -21,6 +22,7 @@ internal const char *KhdVersion = "0.0.5";
 mode DefaultBindingMode = {};
 mode *ActiveBindingMode = NULL;
 uint32_t Compatibility = 0;
+pthread_mutex_t Lock;
 char *ConfigFile;
 char *FocusedApp;
 
@@ -38,14 +40,20 @@ Error(const char *Format, ...)
 internal inline void
 SetFocus(const char *Name)
 {
-    printf("Set focus '%s'\n", Name);
+    pthread_mutex_lock(&Lock);
     if(FocusedApp)
     {
         free(FocusedApp);
         FocusedApp = NULL;
     }
 
-    FocusedApp = strdup(Name);
+    if(Name)
+    {
+        printf("Set focus '%s'\n", Name);
+        FocusedApp = strdup(Name);
+    }
+
+    pthread_mutex_unlock(&Lock);
 }
 
 internal CGEventRef
@@ -113,6 +121,11 @@ Init()
     else
     {
         Error("Khd: Could not open file '%s'\n", ConfigFile);
+    }
+
+    if(pthread_mutex_init(&Lock, NULL) != 0)
+    {
+        Error("Khd: Could not create mutex");
     }
 
     signal(SIGCHLD, SIG_IGN);

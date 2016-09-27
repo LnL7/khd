@@ -2,6 +2,7 @@
 #include "locale.h"
 #include "parse.h"
 #include <string.h>
+#include <pthread.h>
 #include <mach/mach_time.h>
 
 #define internal static
@@ -12,6 +13,7 @@ extern mode DefaultBindingMode;
 extern mode *ActiveBindingMode;
 extern uint32_t Compatibility;
 extern char *FocusedApp;
+extern pthread_mutex_t Lock;
 
 internal inline void
 ClockGetTime(long long *Time)
@@ -98,30 +100,38 @@ VerifyHotkeyType(hotkey *Hotkey)
 
     if(Hotkey->Type == Hotkey_Include)
     {
+        pthread_mutex_lock(&Lock);
         char **App = Hotkey->App;
         while(*App)
         {
-            if(FocusedApp &&
-               StringsAreEqual(*App, FocusedApp))
+            if(FocusedApp && StringsAreEqual(*App, FocusedApp))
+            {
+                pthread_mutex_unlock(&Lock);
                 return true;
+            }
 
             ++App;
         }
 
+        pthread_mutex_unlock(&Lock);
         return false;
     }
     else if(Hotkey->Type == Hotkey_Exclude)
     {
+        pthread_mutex_lock(&Lock);
         char **App = Hotkey->App;
         while(*App)
         {
-            if(FocusedApp &&
-               StringsAreEqual(*App, FocusedApp))
+            if(FocusedApp && StringsAreEqual(*App, FocusedApp))
+            {
+                pthread_mutex_unlock(&Lock);
                 return false;
+            }
 
             ++App;
         }
 
+        pthread_mutex_unlock(&Lock);
         return true;
     }
 

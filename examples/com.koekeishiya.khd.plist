@@ -6,7 +6,7 @@
     <string>com.koekeishiya.khd</string>
     <key>ProgramArguments</key>
     <array>
-    <string>/path/to/khd</string>
+        <string>/usr/local/bin/khd</string>
     </array>
     <key>RunAtLoad</key>
     <true/>

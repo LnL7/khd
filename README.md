@@ -73,3 +73,15 @@ Compatibility with Kwm:
 # set color of focused border to color of active mode
 khd kwm on
 ```
+
+## Development
+
+*Khd* does not use any C++ features, except for function overloading and implicit struct typedefs.
+
+There is also a tiny bit of objective-c code, to expose required functionality from NSWorkspace.
+
+Build *Khd*
+
+      make install      # release version
+      make              # debug version
+

@@ -17,7 +17,7 @@ extern "C" bool CGSIsSecureEventInputSet();
 #define IsSecureKeyboardEntryEnabled CGSIsSecureEventInputSet
 
 internal CFMachPortRef KhdEventTap;
-internal const char *KhdVersion = "1.0.0";
+internal const char *KhdVersion = "1.0.1";
 
 mode DefaultBindingMode = {};
 mode *ActiveBindingMode = NULL;
@@ -72,9 +72,11 @@ KeyCallback(CGEventTapProxy Proxy, CGEventType Type, CGEventRef Event, void *Con
             hotkey *Hotkey = NULL;
             if(HotkeyForCGEvent(Event, &Hotkey))
             {
-                ExecuteHotkey(Hotkey);
-                if(!HasFlags(Hotkey, Hotkey_Flag_Passthrough))
+                if((ExecuteHotkey(Hotkey)) &&
+                   (!HasFlags(Hotkey, Hotkey_Flag_Passthrough)))
+                {
                     return NULL;
+                }
             }
         } break;
     }

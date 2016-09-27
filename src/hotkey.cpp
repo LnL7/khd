@@ -138,12 +138,15 @@ VerifyHotkeyType(hotkey *Hotkey)
     return true;
 }
 
-void ExecuteHotkey(hotkey *Hotkey)
+bool ExecuteHotkey(hotkey *Hotkey)
 {
-    if(VerifyHotkeyType(Hotkey))
+    bool Result = VerifyHotkeyType(Hotkey);
+    if(Result)
     {
         Execute(Hotkey->Command);
     }
+
+    return Result;
 }
 
 

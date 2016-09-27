@@ -14,6 +14,9 @@ void SharedWorkspaceInitialize(void (*Func)(const char *))
 {
     Watcher = [[WorkspaceWatcher alloc] init];
     SetFocusedApplication = Func;
+
+    const char *Name = [[[[NSWorkspace sharedWorkspace] frontmostApplication] localizedName] UTF8String];
+    (*SetFocusedApplication)(Name);
 }
 
 @implementation WorkspaceWatcher

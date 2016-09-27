@@ -4,6 +4,8 @@
 
 **Khd** must have access to the *Accessibility API*, or be ran as root.
 
+[Secure Keyboard Entry](https://github.com/koekeishiya/khd/issues/7) must be disabled for **Khd** to receive key-events.
+
 See [sample config](https://github.com/koekeishiya/khd/blob/master/examples/khdrc) for syntax information.
 
 See [#1](https://github.com/koekeishiya/khd/issues/1) for information regarding keycodes.
@@ -17,6 +19,11 @@ A codesigned binary release is available through Homebrew
 Manage *Khd* using brew services
 
       brew services start khd
+
+Location of logs
+
+      stdout -> /tmp/khd.out
+      stderr -> /tmp/khd.err
 
 ## Usage
 

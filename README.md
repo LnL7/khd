@@ -1,5 +1,7 @@
 **Khd** is a simple modal hotkey-daemon for OSX, using [Quartz Event Services](https://developer.apple.com/reference/coregraphics/1658572-quartz_event_services?language=objc).
 
+**Khd** must have access to the *Accessibility API*, or be ran as root.
+
 See [sample config](https://github.com/koekeishiya/khd/blob/master/examples/khdrc) for syntax information.
 
 See [#1](https://github.com/koekeishiya/khd/issues/1) for information regarding keycodes.

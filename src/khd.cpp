@@ -106,12 +106,24 @@ Init()
 {
     if(!ConfigFile)
     {
-        ConfigFile = strdup(".khdrc");
+        char *Home = getenv("HOME");
+        if(Home)
+        {
+            int Length = strlen(Home) + strlen("/.khdrc");
+            ConfigFile = (char *) malloc(Length + 1);
+            strcpy(ConfigFile, Home);
+            strcat(ConfigFile, "/.khdrc");
+        }
+        else
+        {
+            ConfigFile = strdup(".khdrc");
+        }
     }
 
     DefaultBindingMode.Name = strdup("default");
     ActiveBindingMode = &DefaultBindingMode;
 
+    printf("Khd: Using config '%s'\n", ConfigFile);
     char *Contents = ReadFile(ConfigFile);
     if(Contents)
     {
@@ -182,7 +194,6 @@ ParseArguments(int Count, char **Args)
             case 'c':
             {
                 ConfigFile = strdup(optarg);
-                printf("Khd: Using config '%s'\n", ConfigFile);
             } break;
         }
     }

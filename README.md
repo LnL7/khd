@@ -6,6 +6,18 @@ See [sample config](https://github.com/koekeishiya/khd/blob/master/examples/khdr
 
 See [#1](https://github.com/koekeishiya/khd/issues/1) for information regarding keycodes.
 
+## Install
+
+A codesigned binary release is available through Homebrew
+
+      brew install koekeishiya/khd/khd
+
+Manage *Khd* using brew services
+
+      brew services start khd
+
+## Usage
+
 Arguments:
 ```
 -v | --version: Print version number to stdout
@@ -32,6 +44,12 @@ khd -e "mode activate my_mode"
 # reload config
 khd -e "reload"
 ```
+
+## Configuration
+
+See [sample config](https://github.com/koekeishiya/khd/blob/master/examples/khdrc) for syntax information.
+
+See [#1](https://github.com/koekeishiya/khd/issues/1) for information regarding keycodes.
 
 Customize mode:
 ```

@@ -9,6 +9,7 @@
 #include "daemon.h"
 #include "parse.h"
 #include "hotkey.h"
+#include "sharedworkspace.h"
 
 #define internal static
 extern "C" bool CGSIsSecureEventInputSet();
@@ -32,6 +33,19 @@ Error(const char *Format, ...)
     va_end(Args);
 
     exit(EXIT_FAILURE);
+}
+
+internal inline void
+SetFocus(const char *Name)
+{
+    printf("Set focus '%s'\n", Name);
+    if(FocusedApp)
+    {
+        free(FocusedApp);
+        FocusedApp = NULL;
+    }
+
+    FocusedApp = strdup(Name);
 }
 
 internal CGEventRef
@@ -175,6 +189,7 @@ int main(int Count, char **Args)
         Error("Khd: Could not start daemon! Terminating.\n");
 
     Init();
+    SharedWorkspaceInitialize(SetFocus);
     ConfigureRunLoop();
     CFRunLoopRun();
 

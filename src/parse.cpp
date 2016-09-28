@@ -317,7 +317,10 @@ ParseKeyHexadecimal(tokenizer *Tokenizer, token *Token, hotkey *Hotkey, bool Exp
     free(Temp);
 
     if(ExpectCommand)
+    {
+        AddFlags(Hotkey, Hotkey_Flag_Literal);
         ParseCommand(Tokenizer, Hotkey);
+    }
 }
 
 internal void
@@ -337,6 +340,7 @@ ParseKeyLiteral(tokenizer *Tokenizer, token *Token, hotkey *Hotkey, bool ExpectC
 
     if(Result && ExpectCommand)
     {
+        AddFlags(Hotkey, Hotkey_Flag_Literal);
         ParseCommand(Tokenizer, Hotkey);
     }
     else if(!Result)
@@ -352,6 +356,7 @@ ParseKeySym(tokenizer *Tokenizer, token *Token, hotkey *Hotkey, bool ExpectComma
 {
     AddHotkeyModifier(Token->Text, Token->Length, Hotkey);
 
+    char *At = Tokenizer->At;
     token Symbol = GetToken(Tokenizer);
     switch(Symbol.Type)
     {
@@ -372,7 +377,15 @@ ParseKeySym(tokenizer *Tokenizer, token *Token, hotkey *Hotkey, bool ExpectComma
         } break;
         default:
         {
-            Error("Invalid format for keysym: %.*s\n", Symbol.Length, Symbol.Text);
+            if(ExpectCommand)
+            {
+                Tokenizer->At = At;
+                ParseCommand(Tokenizer, Hotkey);
+            }
+            else
+            {
+                Error("Invalid format for keysym: %.*s\n", Symbol.Length, Symbol.Text);
+            }
         } break;
     }
 }

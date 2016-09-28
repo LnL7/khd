@@ -26,6 +26,9 @@ pthread_mutex_t Lock;
 char *ConfigFile;
 char *FocusedApp;
 
+hotkey Modifiers = {};
+pthread_mutex_t ModifiersLock;
+
 internal inline void
 Error(const char *Format, ...)
 {
@@ -69,8 +72,11 @@ KeyCallback(CGEventTapProxy Proxy, CGEventType Type, CGEventRef Event, void *Con
         } break;
         case kCGEventKeyDown:
         {
+            CGEventFlags Flags = CGEventGetFlags(Event);
+            CGKeyCode Key = CGEventGetIntegerValueField(Event, kCGKeyboardEventKeycode);
+
             hotkey *Hotkey = NULL;
-            if(HotkeyForCGEvent(Event, &Hotkey))
+            if(HotkeyForCGEvent(Flags, Key, &Hotkey, true))
             {
                 if((ExecuteHotkey(Hotkey)) &&
                    (!HasFlags(Hotkey, Hotkey_Flag_Passthrough)))
@@ -78,6 +84,15 @@ KeyCallback(CGEventTapProxy Proxy, CGEventType Type, CGEventRef Event, void *Con
                     return NULL;
                 }
             }
+        } break;
+        case kCGEventFlagsChanged:
+        {
+            CGEventFlags Flags = CGEventGetFlags(Event);
+            CGKeyCode Key = CGEventGetIntegerValueField(Event, kCGKeyboardEventKeycode);
+
+            pthread_mutex_lock(&ModifiersLock);
+            RefreshModifierState(Flags, Key);
+            pthread_mutex_unlock(&ModifiersLock);
         } break;
     }
 
@@ -87,7 +102,8 @@ KeyCallback(CGEventTapProxy Proxy, CGEventType Type, CGEventRef Event, void *Con
 internal inline void
 ConfigureRunLoop()
 {
-    CGEventMask KhdEventMask = (1 << kCGEventKeyDown);
+    CGEventMask KhdEventMask = (1 << kCGEventKeyDown) |
+                               (1 << kCGEventFlagsChanged);
     KhdEventTap = CGEventTapCreate(kCGSessionEventTap,
                                    kCGHeadInsertEventTap,
                                    kCGEventTapOptionDefault,
@@ -138,6 +154,11 @@ Init()
     }
 
     if(pthread_mutex_init(&Lock, NULL) != 0)
+    {
+        Error("Khd: Could not create mutex");
+    }
+
+    if(pthread_mutex_init(&ModifiersLock, NULL) != 0)
     {
         Error("Khd: Could not create mutex");
     }

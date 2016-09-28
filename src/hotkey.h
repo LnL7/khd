@@ -4,6 +4,16 @@
 #include <stdint.h>
 #include <Carbon/Carbon.h>
 
+#define Modifier_Keycode_Left_Cmd     0x37
+#define Modifier_Keycode_Right_Cmd    0x36
+#define Modifier_Keycode_Left_Shift   0x38
+#define Modifier_Keycode_Right_Shift  0x3C
+#define Modifier_Keycode_Left_Alt     0x3A
+#define Modifier_Keycode_Right_Alt    0x3D
+#define Modifier_Keycode_Left_Ctrl    0x3B
+#define Modifier_Keycode_Right_Ctrl   0x3E
+#define Modifier_Keycode_Fn           0x3F
+
 enum osx_event_mask
 {
     Event_Mask_Alt = 0x00080000,
@@ -42,6 +52,7 @@ enum hotkey_flag
     Hotkey_Flag_RControl = (1 << 11),
 
     Hotkey_Flag_Passthrough = (1 << 12),
+    Hotkey_Flag_Literal = (1 << 13),
 };
 
 enum hotkey_type
@@ -93,8 +104,15 @@ HasFlags(hotkey *Hotkey, uint32_t Flag)
     return Result;
 }
 
+inline void
+ClearFlags(hotkey *Hotkey, uint32_t Flag)
+{
+    Hotkey->Flags &= ~Flag;
+}
+
 bool ExecuteHotkey(hotkey *Hotkey);
-bool HotkeyForCGEvent(CGEventRef Event, hotkey **Hotkey);
+bool HotkeyForCGEvent(CGEventFlags Flags, CGKeyCode Key, hotkey **Hotkey, bool Literal);
+void RefreshModifierState(CGEventFlags Flags, CGKeyCode Key);
 
 mode *CreateBindingMode(const char *Mode);
 mode *GetBindingMode(const char *Mode);

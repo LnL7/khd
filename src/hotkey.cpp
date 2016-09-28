@@ -14,6 +14,8 @@ extern mode *ActiveBindingMode;
 extern uint32_t Compatibility;
 extern char *FocusedApp;
 extern pthread_mutex_t Lock;
+extern hotkey Modifiers;
+extern pthread_mutex_t ModifiersLock;
 
 internal inline void
 ClockGetTime(long long *Time)
@@ -280,21 +282,35 @@ HotkeysAreEqual(hotkey *A, hotkey *B)
 {
     if(A && B)
     {
-        return CompareCmdKey(A, B) &&
-               CompareShiftKey(A, B) &&
-               CompareAltKey(A, B) &&
-               CompareControlKey(A, B) &&
-               A->Key == B->Key;
+        if(HasFlags(A, Hotkey_Flag_Literal) != HasFlags(B, Hotkey_Flag_Literal))
+            return false;
+
+        if(!HasFlags(A, Hotkey_Flag_Literal) &&
+           !HasFlags(B, Hotkey_Flag_Literal))
+        {
+            return CompareCmdKey(A, B) &&
+                   CompareShiftKey(A, B) &&
+                   CompareAltKey(A, B) &&
+                   CompareControlKey(A, B);
+        }
+        else
+        {
+            return CompareCmdKey(A, B) &&
+                   CompareShiftKey(A, B) &&
+                   CompareAltKey(A, B) &&
+                   CompareControlKey(A, B) &&
+                   A->Key == B->Key;
+        }
     }
 
     return false;
 }
 
 internal hotkey
-CreateHotkeyFromCGEvent(CGEventRef Event)
+CreateHotkeyFromCGEvent(CGEventFlags Flags, CGKeyCode Key)
 {
-    CGEventFlags Flags = CGEventGetFlags(Event);
     hotkey Eventkey = {};
+    Eventkey.Key = Key;
 
     if((Flags & Event_Mask_Cmd) == Event_Mask_Cmd)
     {
@@ -356,8 +372,126 @@ CreateHotkeyFromCGEvent(CGEventRef Event)
             AddFlags(&Eventkey, Hotkey_Flag_Control);
     }
 
-    Eventkey.Key = CGEventGetIntegerValueField(Event, kCGKeyboardEventKeycode);
     return Eventkey;
+}
+
+internal inline void
+DispatchModifierEvent(CGEventFlags EventFlags, uint32_t Flag)
+{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.1 * NSEC_PER_SEC),
+                   dispatch_get_main_queue(),
+    ^{
+        pthread_mutex_lock(&ModifiersLock);
+        if(!(HasFlags(&Modifiers, Flag)))
+        {
+            hotkey *Hotkey = NULL;
+            if(HotkeyForCGEvent(EventFlags, 0, &Hotkey, false))
+            {
+                ExecuteHotkey(Hotkey);
+            }
+        }
+        pthread_mutex_unlock(&ModifiersLock);
+    });
+}
+
+void RefreshModifierState(CGEventFlags Flags, CGKeyCode Key)
+{
+    if(Key == Modifier_Keycode_Left_Cmd)
+    {
+        if(Flags & Event_Mask_LCmd)
+        {
+            AddFlags(&Modifiers, Hotkey_Flag_LCmd);
+            DispatchModifierEvent(Flags, Hotkey_Flag_LCmd);
+        }
+        else
+        {
+            ClearFlags(&Modifiers, Hotkey_Flag_LCmd);
+        }
+    }
+    else if(Key == Modifier_Keycode_Right_Cmd)
+    {
+        if(Flags & Event_Mask_RCmd)
+        {
+            AddFlags(&Modifiers, Hotkey_Flag_RCmd);
+            DispatchModifierEvent(Flags, Hotkey_Flag_RCmd);
+        }
+        else
+        {
+            ClearFlags(&Modifiers, Hotkey_Flag_RCmd);
+        }
+    }
+    else if(Key == Modifier_Keycode_Left_Shift)
+    {
+        if(Flags & Event_Mask_LShift)
+        {
+            AddFlags(&Modifiers, Hotkey_Flag_LShift);
+            DispatchModifierEvent(Flags, Hotkey_Flag_LShift);
+        }
+        else
+        {
+            ClearFlags(&Modifiers, Hotkey_Flag_LShift);
+        }
+    }
+    else if(Key == Modifier_Keycode_Right_Shift)
+    {
+        if(Flags & Event_Mask_RShift)
+        {
+            AddFlags(&Modifiers, Hotkey_Flag_RShift);
+            DispatchModifierEvent(Flags, Hotkey_Flag_RShift);
+        }
+        else
+        {
+            ClearFlags(&Modifiers, Hotkey_Flag_RShift);
+        }
+    }
+    else if(Key == Modifier_Keycode_Left_Alt)
+    {
+        if(Flags & Event_Mask_LAlt)
+        {
+            AddFlags(&Modifiers, Hotkey_Flag_LAlt);
+            DispatchModifierEvent(Flags, Hotkey_Flag_LAlt);
+        }
+        else
+        {
+            ClearFlags(&Modifiers, Hotkey_Flag_LAlt);
+        }
+    }
+    else if(Key == Modifier_Keycode_Right_Alt)
+    {
+        if(Flags & Event_Mask_RAlt)
+        {
+            AddFlags(&Modifiers, Hotkey_Flag_RAlt);
+            DispatchModifierEvent(Flags, Hotkey_Flag_RAlt);
+        }
+        else
+        {
+            ClearFlags(&Modifiers, Hotkey_Flag_RAlt);
+        }
+    }
+    else if(Key == Modifier_Keycode_Left_Ctrl)
+    {
+        if(Flags & Event_Mask_LControl)
+        {
+            AddFlags(&Modifiers, Hotkey_Flag_LControl);
+            DispatchModifierEvent(Flags, Hotkey_Flag_LControl);
+        }
+        else
+        {
+            ClearFlags(&Modifiers, Hotkey_Flag_LControl);
+        }
+    }
+    else if(Key == Modifier_Keycode_Right_Ctrl)
+    {
+        if(Flags & Event_Mask_RControl)
+        {
+            AddFlags(&Modifiers, Hotkey_Flag_RControl);
+            DispatchModifierEvent(Flags, Hotkey_Flag_RControl);
+        }
+        else
+        {
+            ClearFlags(&Modifiers, Hotkey_Flag_RControl);
+        }
+    }
 }
 
 internal bool
@@ -386,9 +520,14 @@ HotkeyExists(uint32_t Flags, CGKeyCode Keycode, hotkey **Result, const char *Mod
     return false;
 }
 
-bool HotkeyForCGEvent(CGEventRef Event, hotkey **Hotkey)
+bool HotkeyForCGEvent(CGEventFlags Flags, CGKeyCode Key, hotkey **Hotkey, bool Literal)
 {
-    hotkey Eventkey = CreateHotkeyFromCGEvent(Event);
+    hotkey Eventkey = CreateHotkeyFromCGEvent(Flags, Key);
+    if(Literal)
+    {
+        AddFlags(&Eventkey, Hotkey_Flag_Literal);
+    }
+
     return HotkeyExists(Eventkey.Flags, Eventkey.Key, Hotkey, ActiveBindingMode->Name);
 }
 

@@ -298,41 +298,61 @@ CreateHotkeyFromCGEvent(CGEventRef Event)
 
     if((Flags & Event_Mask_Cmd) == Event_Mask_Cmd)
     {
-        if((Flags & Event_Mask_LCmd) == Event_Mask_LCmd)
+        bool Left = (Flags & Event_Mask_LCmd) == Event_Mask_LCmd;
+        bool Right = (Flags & Event_Mask_RCmd) == Event_Mask_RCmd;
+
+        if(Left)
             AddFlags(&Eventkey, Hotkey_Flag_LCmd);
-        else if((Flags & Event_Mask_RCmd) == Event_Mask_RCmd)
+
+        if(Right)
             AddFlags(&Eventkey, Hotkey_Flag_RCmd);
-        else
+
+        if(!Left && !Right)
             AddFlags(&Eventkey, Hotkey_Flag_Cmd);
     }
 
     if((Flags & Event_Mask_Shift) == Event_Mask_Shift)
     {
-        if((Flags & Event_Mask_LShift) == Event_Mask_LShift)
+        bool Left = (Flags & Event_Mask_LShift) == Event_Mask_LShift;
+        bool Right = (Flags & Event_Mask_RShift) == Event_Mask_RShift;
+
+        if(Left)
             AddFlags(&Eventkey, Hotkey_Flag_LShift);
-        else if((Flags & Event_Mask_RShift) == Event_Mask_RShift)
+
+        if(Right)
             AddFlags(&Eventkey, Hotkey_Flag_RShift);
-        else
+
+        if(!Left && !Right)
             AddFlags(&Eventkey, Hotkey_Flag_Shift);
     }
 
     if((Flags & Event_Mask_Alt) == Event_Mask_Alt)
     {
-        if((Flags & Event_Mask_LAlt) == Event_Mask_LAlt)
+        bool Left = (Flags & Event_Mask_LAlt) == Event_Mask_LAlt;
+        bool Right = (Flags & Event_Mask_RAlt) == Event_Mask_RAlt;
+
+        if(Left)
             AddFlags(&Eventkey, Hotkey_Flag_LAlt);
-        else if((Flags & Event_Mask_RAlt) == Event_Mask_RAlt)
+
+        if(Right)
             AddFlags(&Eventkey, Hotkey_Flag_RAlt);
-        else
+
+        if(!Left && !Right)
             AddFlags(&Eventkey, Hotkey_Flag_Alt);
     }
 
     if((Flags & Event_Mask_Control) == Event_Mask_Control)
     {
-        if((Flags & Event_Mask_LControl) == Event_Mask_LControl)
+        bool Left = (Flags & Event_Mask_LControl) == Event_Mask_LControl;
+        bool Right = (Flags & Event_Mask_RControl) == Event_Mask_RControl;
+
+        if(Left)
             AddFlags(&Eventkey, Hotkey_Flag_LControl);
-        else if((Flags & Event_Mask_RControl) == Event_Mask_RControl)
+
+        if(Right)
             AddFlags(&Eventkey, Hotkey_Flag_RControl);
-        else
+
+        if(!Left && !Right)
             AddFlags(&Eventkey, Hotkey_Flag_Control);
     }
 

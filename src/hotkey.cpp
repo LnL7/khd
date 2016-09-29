@@ -59,24 +59,24 @@ UpdatePrefixTimer()
     });
 }
 
-/* TODO(koekeishiya): We probably want the user to be able to specify
- * which shell they want to use. */
-internal const char *Shell = "/bin/bash";
-internal const char *ShellArgs = "-c";
 
 internal void
 Execute(char *Command)
 {
+    local_persist char Arg[] = "-c";
+    local_persist char *Shell = getenv("SHELL");
+    if(!Shell)
+    {
+        Shell = strdup("/bin/bash");
+    }
+
     int ChildPID = fork();
     if(ChildPID == 0)
     {
-        char *Exec[] = { (char *) Shell, (char *) ShellArgs, Command, NULL};
+        char *Exec[] = { Shell, Arg, Command, NULL};
         int StatusCode = execvp(Exec[0], Exec);
         exit(StatusCode);
     }
-
-    if(ActiveBindingMode->Prefix)
-        UpdatePrefixTimer();
 }
 
 internal inline void
@@ -84,14 +84,7 @@ ExecuteKwmBorderCommand()
 {
     char KwmCommand[64] = "kwmc config border focused color ";
     strcat(KwmCommand, ActiveBindingMode->Color);
-
-    int ChildPID = fork();
-    if(ChildPID == 0)
-    {
-        char *Exec[] = { (char *) Shell, (char *) ShellArgs, KwmCommand, NULL};
-        int StatusCode = execvp(Exec[0], Exec);
-        exit(StatusCode);
-    }
+    Execute(KwmCommand);
 }
 
 internal inline bool
@@ -146,6 +139,8 @@ bool ExecuteHotkey(hotkey *Hotkey)
     if(Result)
     {
         Execute(Hotkey->Command);
+        if(ActiveBindingMode->Prefix)
+            UpdatePrefixTimer();
     }
 
     return Result;

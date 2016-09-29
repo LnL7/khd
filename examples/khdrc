@@ -23,14 +23,16 @@
 #                                    'passthrough'. this causes the key to be passed
 #                                    through to the system, instead of being consumed.
 #
-#                       <command>  = command is executed through '/bin/bash -c' and
-#                                    follows valid shell syntax. Thus, to execute
-#                                    multiple comands, use the ';' delimeter.
+#                       <command>  = command is executed through '$SHELL -c' and
+#                                    follows valid shell syntax. if the $SHELL environment
+#                                    variable is not set, it will default to '/bin/bash'.
+#                                    when bash is used, the ';' delimeter can be specified
+#                                    to chain commands.
 #
-#                                    To allow a command to extend into multiple lines,
+#                                    to allow a command to extend into multiple lines,
 #                                    prepend '\' at the end of the previous line.
 #
-#                                    An EOL character signifies the end of the bind.
+#                                    an EOL character signifies the end of the bind.
 
 # NOTE(koekeishiya) Example of passthrough
 # cmd - m -> : echo "alert and minimize window" | alerter -title Test passthrough -timeout 2

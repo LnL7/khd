@@ -13,6 +13,7 @@ extern mode DefaultBindingMode;
 extern mode *ActiveBindingMode;
 extern char *ConfigFile;
 extern uint32_t Compatibility;
+extern double ModifierTriggerTimeout;
 
 internal void
 Error(const char *Format, ...)
@@ -474,6 +475,24 @@ ParseKhdKwmCompatibility(tokenizer *Tokenizer)
         Notice("Unexpected token '%.*s'\n", Token.Length, Token.Text);
     }
 }
+internal void
+ParseKhdModTriggerTimeout(tokenizer *Tokenizer)
+{
+    token Token = GetToken(Tokenizer);
+    switch(Token.Type)
+    {
+        case Token_Digit:
+        {
+            char *Temp = AllocAndCopyString(Token.Text, Token.Length);
+            ModifierTriggerTimeout = StringToDouble(Temp);
+            free(Temp);
+        } break;
+        default:
+        {
+            Notice("Unexpected token '%.*s'\n", Token.Length, Token.Text);
+        } break;
+    }
+}
 
 internal void
 ParseKhdMode(tokenizer *Tokenizer)
@@ -522,6 +541,10 @@ ParseKhd(tokenizer *Tokenizer)
             else if(TokenEquals(Token, "kwm"))
             {
                 ParseKhdKwmCompatibility(Tokenizer);
+            }
+            else if(TokenEquals(Token, "mod_trigger_timeout"))
+            {
+                ParseKhdModTriggerTimeout(Tokenizer);
             }
             else if(TokenEquals(Token, "mode"))
             {

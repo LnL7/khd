@@ -65,7 +65,8 @@ inline bool
 IsAlpha(char C)
 {
     bool Result = (((C >= 'a') && (C <= 'z')) ||
-                   ((C >= 'A') && (C <= 'Z')));
+                   ((C >= 'A') && (C <= 'Z')) ||
+                   ((C == '_')));
 
     return Result;
 }

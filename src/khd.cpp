@@ -27,14 +27,15 @@ char *ConfigFile;
 char *FocusedApp;
 
 hotkey Modifiers = {};
-pthread_mutex_t ModifiersLock;
+long long ModifierTriggerTime;
+double ModifierTriggerTimeout;
 
 internal inline void
 Error(const char *Format, ...)
 {
     va_list Args;
     va_start(Args, Format);
-    vprintf(Format, Args);
+    vfprintf(stderr, Format, Args);
     va_end(Args);
 
     exit(EXIT_FAILURE);
@@ -52,7 +53,6 @@ SetFocus(const char *Name)
 
     if(Name)
     {
-        printf("Set focus '%s'\n", Name);
         FocusedApp = strdup(Name);
     }
 
@@ -67,7 +67,7 @@ KeyCallback(CGEventTapProxy Proxy, CGEventType Type, CGEventRef Event, void *Con
         case kCGEventTapDisabledByTimeout:
         case kCGEventTapDisabledByUserInput:
         {
-            printf("restart event-tap\n");
+            printf("Khd: Restarting event-tap\n");
             CGEventTapEnable(KhdEventTap, true);
         } break;
         case kCGEventKeyDown:
@@ -89,10 +89,7 @@ KeyCallback(CGEventTapProxy Proxy, CGEventType Type, CGEventRef Event, void *Con
         {
             CGEventFlags Flags = CGEventGetFlags(Event);
             CGKeyCode Key = CGEventGetIntegerValueField(Event, kCGKeyboardEventKeycode);
-
-            pthread_mutex_lock(&ModifiersLock);
             RefreshModifierState(Flags, Key);
-            pthread_mutex_unlock(&ModifiersLock);
         } break;
     }
 
@@ -140,6 +137,7 @@ Init()
 
     DefaultBindingMode.Name = strdup("default");
     ActiveBindingMode = &DefaultBindingMode;
+    ModifierTriggerTimeout = 0.1;
 
     printf("Khd: Using config '%s'\n", ConfigFile);
     char *Contents = ReadFile(ConfigFile);
@@ -154,11 +152,6 @@ Init()
     }
 
     if(pthread_mutex_init(&Lock, NULL) != 0)
-    {
-        Error("Khd: Could not create mutex");
-    }
-
-    if(pthread_mutex_init(&ModifiersLock, NULL) != 0)
     {
         Error("Khd: Could not create mutex");
     }

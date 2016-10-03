@@ -15,7 +15,8 @@ extern uint32_t Compatibility;
 extern char *FocusedApp;
 extern pthread_mutex_t Lock;
 extern hotkey Modifiers;
-extern pthread_mutex_t ModifiersLock;
+extern long long ModifierTriggerTime;
+extern double ModifierTriggerTimeout;
 
 internal inline void
 ClockGetTime(long long *Time)
@@ -31,9 +32,9 @@ ClockGetTime(long long *Time)
 }
 
 internal inline double
-GetTimeDiff(long long Time)
+GetTimeDiff(long long A, long long B)
 {
-    return (Time - ActiveBindingMode->Time) * CLOCK_PRECISION;
+    return (A - B) * CLOCK_PRECISION;
 }
 
 internal inline void
@@ -48,7 +49,7 @@ UpdatePrefixTimer()
             long long Time;
             ClockGetTime(&Time);
 
-            if(GetTimeDiff(Time) >= ActiveBindingMode->Timeout)
+            if(GetTimeDiff(Time, ActiveBindingMode->Time) >= ActiveBindingMode->Timeout)
             {
                 if(ActiveBindingMode->Restore)
                     ActivateMode(ActiveBindingMode->Restore);
@@ -370,23 +371,71 @@ CreateHotkeyFromCGEvent(CGEventFlags Flags, CGKeyCode Key)
     return Eventkey;
 }
 
-internal inline void
-DispatchModifierEvent(CGEventFlags EventFlags, uint32_t Flag)
+internal CGEventFlags
+CreateCGEventFlagsFromHotkey(hotkey *Hotkey)
 {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.1 * NSEC_PER_SEC),
-                   dispatch_get_main_queue(),
-    ^{
-        pthread_mutex_lock(&ModifiersLock);
-        if(!(HasFlags(&Modifiers, Flag)))
-        {
-            hotkey *Hotkey = NULL;
-            if(HotkeyForCGEvent(EventFlags, 0, &Hotkey, false))
-            {
-                ExecuteHotkey(Hotkey);
-            }
-        }
-        pthread_mutex_unlock(&ModifiersLock);
-    });
+    CGEventFlags Flags = 0;
+
+    if(HasFlags(Hotkey, Hotkey_Flag_Cmd))
+        Flags |= Event_Mask_Cmd;
+    else if(HasFlags(Hotkey, Hotkey_Flag_LCmd))
+        Flags |= Event_Mask_LCmd | Event_Mask_Cmd;
+    else if(HasFlags(Hotkey, Hotkey_Flag_RCmd))
+        Flags |= Event_Mask_RCmd | Event_Mask_Cmd;
+
+    if(HasFlags(Hotkey, Hotkey_Flag_Shift))
+        Flags |= Event_Mask_Shift;
+    else if(HasFlags(Hotkey, Hotkey_Flag_LShift))
+        Flags |= Event_Mask_LShift | Event_Mask_Shift;
+    else if(HasFlags(Hotkey, Hotkey_Flag_RShift))
+        Flags |= Event_Mask_RShift | Event_Mask_Shift;
+
+    if(HasFlags(Hotkey, Hotkey_Flag_Alt))
+        Flags |= Event_Mask_Alt;
+    else if(HasFlags(Hotkey, Hotkey_Flag_LAlt))
+        Flags |= Event_Mask_LAlt | Event_Mask_Alt;
+    else if(HasFlags(Hotkey, Hotkey_Flag_RAlt))
+        Flags |= Event_Mask_RAlt | Event_Mask_Alt;
+
+    if(HasFlags(Hotkey, Hotkey_Flag_Control))
+        Flags |= Event_Mask_Control;
+    else if(HasFlags(Hotkey, Hotkey_Flag_LControl))
+        Flags |= Event_Mask_LControl | Event_Mask_Control;
+    else if(HasFlags(Hotkey, Hotkey_Flag_RControl))
+        Flags |= Event_Mask_RControl | Event_Mask_Control;
+
+    return Flags;
+}
+
+internal inline void
+ExecuteModifierOnlyHotkey(uint32_t Flag)
+{
+    CGEventFlags EventFlags = CreateCGEventFlagsFromHotkey(&Modifiers);
+    hotkey *Hotkey = NULL;
+    if(HotkeyForCGEvent(EventFlags, 0, &Hotkey, false))
+    {
+        ExecuteHotkey(Hotkey);
+    }
+}
+
+internal inline void
+ModifierPressed(uint32_t Flag)
+{
+    AddFlags(&Modifiers, Flag);
+    ClockGetTime(&ModifierTriggerTime);
+}
+
+internal inline void
+ModifierReleased(uint32_t Flag)
+{
+    long long Time;
+    ClockGetTime(&Time);
+    if(GetTimeDiff(Time, ModifierTriggerTime) < ModifierTriggerTimeout)
+    {
+        ExecuteModifierOnlyHotkey(Flag);
+    }
+
+    ClearFlags(&Modifiers, Flag);
 }
 
 void RefreshModifierState(CGEventFlags Flags, CGKeyCode Key)
@@ -394,98 +443,58 @@ void RefreshModifierState(CGEventFlags Flags, CGKeyCode Key)
     if(Key == Modifier_Keycode_Left_Cmd)
     {
         if(Flags & Event_Mask_LCmd)
-        {
-            AddFlags(&Modifiers, Hotkey_Flag_LCmd);
-            DispatchModifierEvent(Flags, Hotkey_Flag_LCmd);
-        }
+            ModifierPressed(Hotkey_Flag_LCmd);
         else
-        {
-            ClearFlags(&Modifiers, Hotkey_Flag_LCmd);
-        }
+            ModifierReleased(Hotkey_Flag_LCmd);
     }
     else if(Key == Modifier_Keycode_Right_Cmd)
     {
         if(Flags & Event_Mask_RCmd)
-        {
-            AddFlags(&Modifiers, Hotkey_Flag_RCmd);
-            DispatchModifierEvent(Flags, Hotkey_Flag_RCmd);
-        }
+            ModifierPressed(Hotkey_Flag_RCmd);
         else
-        {
-            ClearFlags(&Modifiers, Hotkey_Flag_RCmd);
-        }
+            ModifierReleased(Hotkey_Flag_RCmd);
     }
     else if(Key == Modifier_Keycode_Left_Shift)
     {
         if(Flags & Event_Mask_LShift)
-        {
-            AddFlags(&Modifiers, Hotkey_Flag_LShift);
-            DispatchModifierEvent(Flags, Hotkey_Flag_LShift);
-        }
+            ModifierPressed(Hotkey_Flag_LShift);
         else
-        {
-            ClearFlags(&Modifiers, Hotkey_Flag_LShift);
-        }
+            ModifierReleased(Hotkey_Flag_LShift);
     }
     else if(Key == Modifier_Keycode_Right_Shift)
     {
         if(Flags & Event_Mask_RShift)
-        {
-            AddFlags(&Modifiers, Hotkey_Flag_RShift);
-            DispatchModifierEvent(Flags, Hotkey_Flag_RShift);
-        }
+            ModifierPressed(Hotkey_Flag_RShift);
         else
-        {
-            ClearFlags(&Modifiers, Hotkey_Flag_RShift);
-        }
+            ModifierReleased(Hotkey_Flag_RShift);
     }
     else if(Key == Modifier_Keycode_Left_Alt)
     {
         if(Flags & Event_Mask_LAlt)
-        {
-            AddFlags(&Modifiers, Hotkey_Flag_LAlt);
-            DispatchModifierEvent(Flags, Hotkey_Flag_LAlt);
-        }
+            ModifierPressed(Hotkey_Flag_LAlt);
         else
-        {
-            ClearFlags(&Modifiers, Hotkey_Flag_LAlt);
-        }
+            ModifierReleased(Hotkey_Flag_LAlt);
     }
     else if(Key == Modifier_Keycode_Right_Alt)
     {
         if(Flags & Event_Mask_RAlt)
-        {
-            AddFlags(&Modifiers, Hotkey_Flag_RAlt);
-            DispatchModifierEvent(Flags, Hotkey_Flag_RAlt);
-        }
+            ModifierPressed(Hotkey_Flag_RAlt);
         else
-        {
-            ClearFlags(&Modifiers, Hotkey_Flag_RAlt);
-        }
+            ModifierReleased(Hotkey_Flag_RAlt);
     }
     else if(Key == Modifier_Keycode_Left_Ctrl)
     {
         if(Flags & Event_Mask_LControl)
-        {
-            AddFlags(&Modifiers, Hotkey_Flag_LControl);
-            DispatchModifierEvent(Flags, Hotkey_Flag_LControl);
-        }
+            ModifierPressed(Hotkey_Flag_LControl);
         else
-        {
-            ClearFlags(&Modifiers, Hotkey_Flag_LControl);
-        }
+            ModifierReleased(Hotkey_Flag_LControl);
     }
     else if(Key == Modifier_Keycode_Right_Ctrl)
     {
         if(Flags & Event_Mask_RControl)
-        {
-            AddFlags(&Modifiers, Hotkey_Flag_RControl);
-            DispatchModifierEvent(Flags, Hotkey_Flag_RControl);
-        }
+            ModifierPressed(Hotkey_Flag_RControl);
         else
-        {
-            ClearFlags(&Modifiers, Hotkey_Flag_RControl);
-        }
+            ModifierReleased(Hotkey_Flag_RControl);
     }
 }
 
@@ -553,42 +562,6 @@ void SendKeySequence(const char *Sequence)
     CFRelease(KeyUpEvent);
     CFRelease(KeyDownEvent);
     CFRelease(SequenceRef);
-}
-
-internal CGEventFlags
-CreateCGEventFlagsFromHotkey(hotkey *Hotkey)
-{
-    CGEventFlags Flags = 0;
-
-    if(HasFlags(Hotkey, Hotkey_Flag_Cmd))
-        Flags |= Event_Mask_Cmd;
-    else if(HasFlags(Hotkey, Hotkey_Flag_LCmd))
-        Flags |= Event_Mask_LCmd | Event_Mask_Cmd;
-    else if(HasFlags(Hotkey, Hotkey_Flag_RCmd))
-        Flags |= Event_Mask_RCmd | Event_Mask_Cmd;
-
-    if(HasFlags(Hotkey, Hotkey_Flag_Shift))
-        Flags |= Event_Mask_Shift;
-    else if(HasFlags(Hotkey, Hotkey_Flag_LShift))
-        Flags |= Event_Mask_LShift | Event_Mask_Shift;
-    else if(HasFlags(Hotkey, Hotkey_Flag_RShift))
-        Flags |= Event_Mask_RShift | Event_Mask_Shift;
-
-    if(HasFlags(Hotkey, Hotkey_Flag_Alt))
-        Flags |= Event_Mask_Alt;
-    else if(HasFlags(Hotkey, Hotkey_Flag_LAlt))
-        Flags |= Event_Mask_LAlt | Event_Mask_Alt;
-    else if(HasFlags(Hotkey, Hotkey_Flag_RAlt))
-        Flags |= Event_Mask_RAlt | Event_Mask_Alt;
-
-    if(HasFlags(Hotkey, Hotkey_Flag_Control))
-        Flags |= Event_Mask_Control;
-    else if(HasFlags(Hotkey, Hotkey_Flag_LControl))
-        Flags |= Event_Mask_LControl | Event_Mask_Control;
-    else if(HasFlags(Hotkey, Hotkey_Flag_RControl))
-        Flags |= Event_Mask_RControl | Event_Mask_Control;
-
-    return Flags;
 }
 
 void SendKeyPress(char *KeySym)

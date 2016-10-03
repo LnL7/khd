@@ -17,7 +17,7 @@ extern "C" bool CGSIsSecureEventInputSet();
 #define IsSecureKeyboardEntryEnabled CGSIsSecureEventInputSet
 
 internal CFMachPortRef KhdEventTap;
-internal const char *KhdVersion = "1.0.1";
+internal const char *KhdVersion = "1.1.0";
 
 mode DefaultBindingMode = {};
 mode *ActiveBindingMode = NULL;

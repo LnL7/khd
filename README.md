@@ -64,6 +64,11 @@ See [#1](https://github.com/koekeishiya/khd/issues/1) for information regarding 
 
 Customize mode:
 ```
+# modifier only binds consist of the sequence mod_pressed -> mod_released
+# and must be performed within a given timeframe.
+# the following specifies the timeout (in seconds) to be used.
+khd mod_trigger_timeout 0.1
+
 # enable prefix mode
 khd mode my_mode prefix on
 

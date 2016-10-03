@@ -59,6 +59,7 @@
 # left shift    -> (    right shift   -> )
 # left cmd      -> {    right cmd     -> }
 
+# khd mod_trigger_timeout 0.1
 # lshift : khd -p "shift - 8"
 # rshift : khd -p "shift - 9"
 # lcmd   : khd -p "shift + alt - 8"

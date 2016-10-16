@@ -304,8 +304,6 @@ AddHotkeyModifier(char *Mod, int Length, hotkey *Hotkey)
         AddFlags(Hotkey, Hotkey_Flag_LControl);
     else if(StringsAreEqual(Modifier, "rctrl"))
         AddFlags(Hotkey, Hotkey_Flag_RControl);
-    else if(StringsAreEqual(Modifier, "fn"))
-        AddFlags(Hotkey, Hotkey_Flag_Fn);
     else
         SetHotkeyMode(Hotkey, Modifier);
 

@@ -274,12 +274,6 @@ CompareControlKey(hotkey *A, hotkey *B)
 }
 
 internal inline bool
-CompareFnKey(hotkey *A, hotkey *B)
-{
-    return HasFlags(A, Hotkey_Flag_Fn) == HasFlags(B, Hotkey_Flag_Fn);
-}
-
-internal inline bool
 HotkeysAreEqual(hotkey *A, hotkey *B)
 {
     if(A && B)
@@ -293,8 +287,7 @@ HotkeysAreEqual(hotkey *A, hotkey *B)
             return CompareCmdKey(A, B) &&
                    CompareShiftKey(A, B) &&
                    CompareAltKey(A, B) &&
-                   CompareControlKey(A, B) &&
-                   CompareFnKey(A, B);
+                   CompareControlKey(A, B);
         }
         else
         {
@@ -302,7 +295,6 @@ HotkeysAreEqual(hotkey *A, hotkey *B)
                    CompareShiftKey(A, B) &&
                    CompareAltKey(A, B) &&
                    CompareControlKey(A, B) &&
-                   CompareFnKey(A, B) &&
                    A->Key == B->Key;
         }
     }
@@ -376,11 +368,6 @@ CreateHotkeyFromCGEvent(CGEventFlags Flags, CGKeyCode Key)
             AddFlags(&Eventkey, Hotkey_Flag_Control);
     }
 
-    if((Flags & Event_Mask_Fn) == Event_Mask_Fn)
-    {
-        AddFlags(&Eventkey, Hotkey_Flag_Fn);
-    }
-
     return Eventkey;
 }
 
@@ -416,9 +403,6 @@ CreateCGEventFlagsFromHotkey(hotkey *Hotkey)
         Flags |= Event_Mask_LControl | Event_Mask_Control;
     else if(HasFlags(Hotkey, Hotkey_Flag_RControl))
         Flags |= Event_Mask_RControl | Event_Mask_Control;
-
-    if(HasFlags(Hotkey, Hotkey_Flag_Fn))
-        Flags |= Event_Mask_Fn;
 
     return Flags;
 }
@@ -511,13 +495,6 @@ void RefreshModifierState(CGEventFlags Flags, CGKeyCode Key)
             ModifierPressed(Hotkey_Flag_RControl);
         else
             ModifierReleased(Hotkey_Flag_RControl);
-    }
-    else if(Key == Modifier_Keycode_Fn)
-    {
-        if(Flags & Event_Mask_Fn)
-            ModifierPressed(Hotkey_Flag_Fn);
-        else
-            ModifierReleased(Hotkey_Flag_Fn);
     }
 }
 
